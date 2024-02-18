@@ -12,6 +12,7 @@
   "dependencies": {
     "@uniswap/sdk-core": "^4.1.2",
     "@uniswap/v3-sdk": "^3.10.2",
+    "dotenv": "^16.4.4",
     "ethers": "^5.7.2"
   }
 }
