@@ -273,6 +273,22 @@ contract LPAggreator is ERC721Receiver {
         uint256 removeAmount,
         address token0,
         address token1,
+        uint24 poolFee,
         address swapRouter
-    ) external {}
+    )
+        external
+        returns (
+            uint256 tokenId,
+            uint128 liquidity,
+            uint256 amount0,
+            uint256 amount1
+        )
+    {
+        // check if caller is the owner of the NFT
+        // remove liquidity (get tokenA and tokenB)
+        // swap tokens (check if token0 or token1 is WETH)
+        // swap tokenA for token0 and swap tokenB for token1 (or vice versa) (check if pool A/0 or A/1 exists)
+        // mint new position (or add liquidity to existing position)
+        // emit events and return values
+    }
 }
