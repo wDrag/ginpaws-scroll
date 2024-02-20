@@ -119,14 +119,7 @@ async function swap(
       outputAmount: CurrencyAmount.fromRawAmount(tokenB, amountOut),
       tradeType: TradeType.EXACT_INPUT,
     });
-    if (
-      (await tokenInContract.callStatic.allowance(
-        walletAddress,
-        SWAP_ROUTER_ADDRESS
-      )) < amountIn
-    ) {
-      await getTokenTransferApproval(tokenA, amountIn);
-    }
+    await getTokenTransferApproval(tokenA, amountIn);
   } else {
     const amountIn = await getOutputQuote(tokenOut, tokenIn, fee, amountOut);
     if (BigInt(amountIn.toString()) > BigInt(amoutInMaximum.toString())) {
@@ -138,14 +131,7 @@ async function swap(
       outputAmount: CurrencyAmount.fromRawAmount(tokenB, amountOut),
       tradeType: TradeType.EXACT_OUTPUT,
     });
-    if (
-      (await tokenInContract.callStatic.allowance(
-        walletAddress,
-        SWAP_ROUTER_ADDRESS
-      )) < amountIn
-    ) {
-      await getTokenTransferApproval(tokenA, amountIn);
-    }
+    await getTokenTransferApproval(tokenA, amountIn);
   }
 
   const options = {
@@ -179,34 +165,34 @@ async function swap(
   return;
 }
 
-// async function main() {
-//   // const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-//   // console.log("Before balance: ");
-//   // const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-//   // await wallet.sendTransaction({
-//   //   to: WETH_ADDRESS,
-//   //   value: ethers.utils.parseEther("10"),
-//   // });
-//   // await swap(
-//   //   WETH_ADDRESS,
-//   //   "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
-//   //   3000,
-//   //   ethers.utils.parseEther("0.1"),
-//   //   0,
-//   //   0,
-//   //   0,
-//   //   0
-//   // );
+async function main() {
+  // const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+  // console.log("Before balance: ");
+  // const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  // await wallet.sendTransaction({
+  //   to: WETH_ADDRESS,
+  //   value: ethers.utils.parseEther("10"),
+  // });
+  // await swap(
+  //   WETH_ADDRESS,
+  //   "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+  //   3000,
+  //   ethers.utils.parseEther("0.1"),
+  //   0,
+  //   0,
+  //   0,
+  //   0
+  // );
 
-//   await swap(
-//     WETH_ADDRESS,
-//     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
-//     3000,
-//     0,
-//     0,
-//     fromReadableAmount(1000, 6).toString(),
-//     ethers.utils.parseEther("1"),
-//     1
-//   );
-// }
-// main();
+  await swap(
+    WETH_ADDRESS,
+    "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+    3000,
+    0,
+    0,
+    fromReadableAmount(1000, 6).toString(),
+    ethers.utils.parseEther("1"),
+    1
+  );
+}
+main();
