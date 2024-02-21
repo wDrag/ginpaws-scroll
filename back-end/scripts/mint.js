@@ -8,6 +8,8 @@ const {
   WETH_ADDRESS,
   getTokenTransferApproval,
   makeToken,
+  getBalance,
+  toReadableAmount,
 } = require("./helper");
 const ERC20ABI = require("../abi/ERC20.json");
 
@@ -24,14 +26,21 @@ const {
   computePoolAddress,
 } = require("@uniswap/v3-sdk");
 const IUniswapV3PoolABI = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
+const { getOutputQuote } = require("./quoter");
+
+async function getCurrentPosition() {}
 
 async function mintNewPosition(token0, token1, fee, amount0, amount1) {
   const provider = getProvider();
   const chainId = (await provider.getNetwork()).chainId;
   const tokenA = await makeToken(token0);
   const tokenB = await makeToken(token1);
-
-  console.log(NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId]);
+  console.log("Minting position for: ", tokenA.symbol, tokenB.symbol, fee);
+  console.log(
+    "Amounts: ",
+    toReadableAmount(amount0.toString(), tokenA.decimals),
+    toReadableAmount(amount1.toString(), tokenB.decimals)
+  );
 
   await getTokenTransferApproval(
     tokenA,
@@ -75,20 +84,14 @@ async function mintNewPosition(token0, token1, fee, amount0, amount1) {
     nearestUsableTick(configuredPool.tickCurrent, configuredPool.tickSpacing) -
     configuredPool.tickSpacing * 2;
 
+  const tickUpper =
+    nearestUsableTick(configuredPool.tickCurrent, configuredPool.tickSpacing) +
+    configuredPool.tickSpacing * 2;
+
   const position = Position.fromAmounts({
     pool: configuredPool,
-    tickLower:
-      nearestUsableTick(
-        configuredPool.tickCurrent,
-        configuredPool.tickSpacing
-      ) -
-      configuredPool.tickSpacing * 2,
-    tickUpper:
-      nearestUsableTick(
-        configuredPool.tickCurrent,
-        configuredPool.tickSpacing
-      ) +
-      configuredPool.tickSpacing * 2,
+    tickLower: tickLower,
+    tickUpper: tickUpper,
     amount0: amount0,
     amount1: amount1,
     useFullPrecision: true,
@@ -97,7 +100,7 @@ async function mintNewPosition(token0, token1, fee, amount0, amount1) {
   const mintOptions = {
     recipient: getWalletAddress(),
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(50, 10_000),
+    slippageTolerance: new Percent(1_000, 10_000),
   };
   const { calldata, value } = NonfungiblePositionManager.addCallParameters(
     position,
@@ -114,6 +117,7 @@ async function mintNewPosition(token0, token1, fee, amount0, amount1) {
   };
 
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  console.log(transaction);
   const txRes = await wallet.sendTransaction(transaction);
   console.log("Transaction hash: ", txRes.hash);
 }
@@ -122,25 +126,38 @@ async function main() {
   const provider = getProvider();
   const walletAddress = getWalletAddress();
   const WETH_Contract = new ethers.Contract(WETH_ADDRESS, ERC20ABI, provider);
-  const WETH_balance = await WETH_Contract.balanceOf(walletAddress);
   const USDC_Contract = new ethers.Contract(
     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     ERC20ABI,
     provider
   );
-  const USDC_balance = await USDC_Contract.balanceOf(walletAddress);
   console.log(
     "Before balance: ",
-    ethers.utils.formatEther(WETH_balance),
+    ethers.utils.formatEther(await getBalance(WETH_Contract, walletAddress)),
     " / ",
-    ethers.utils.formatUnits(USDC_balance, 6)
+    ethers.utils.formatUnits(await getBalance(USDC_Contract, walletAddress), 6)
+  );
+  console.log(
+    "Quote: ",
+    await getOutputQuote(
+      WETH_ADDRESS,
+      "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      3000,
+      ethers.utils.parseEther("0.1")
+    )
   );
   await mintNewPosition(
     WETH_ADDRESS,
     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
     3000,
     ethers.utils.parseEther("0.1"),
-    ethers.utils.parseEther("100")
+    ethers.utils.parseUnits("100", 6)
+  );
+  console.log(
+    "After balance: ",
+    ethers.utils.formatEther(await getBalance(WETH_Contract, walletAddress)),
+    " / ",
+    ethers.utils.formatUnits(await getBalance(USDC_Contract, walletAddress), 6)
   );
 }
 main();

@@ -139,6 +139,10 @@ async function getTokenTransferApproval(
   }
 }
 
+async function getBalance(tokenContract, walletAddress) {
+  return tokenContract.callStatic.balanceOf(walletAddress);
+}
+
 module.exports = {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
@@ -149,6 +153,9 @@ module.exports = {
   QUOTER_ADDRESS,
   QUOTER2_ADDRESS,
   RPC_URL,
+  fromReadableAmount,
+  toReadableAmount,
+  getBalance,
   makeToken,
   getProvider,
   getWalletAddress,
