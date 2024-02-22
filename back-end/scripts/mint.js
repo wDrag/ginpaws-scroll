@@ -3,30 +3,33 @@ const {
   getProvider,
   FACTORY_ADDRESS,
   getWalletAddress,
-  MAX_FEE_PER_GAS,
-  MAX_PRIORITY_FEE_PER_GAS,
   WETH_ADDRESS,
   getTokenTransferApproval,
   makeToken,
   getBalance,
   toReadableAmount,
+  MAX_FEE_PER_GAS,
+  MAX_PRIORITY_FEE_PER_GAS,
 } = require("./helper");
 const ERC20ABI = require("../abi/ERC20.json");
 
 const {
   NONFUNGIBLE_POSITION_MANAGER_ADDRESSES,
   Percent,
-  Token,
 } = require("@uniswap/sdk-core");
 const {
   Position,
   Pool,
   nearestUsableTick,
-  NonfungiblePositionManager,
   computePoolAddress,
+  NonfungiblePositionManager,
+  TickMath,
 } = require("@uniswap/v3-sdk");
 const IUniswapV3PoolABI = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
 const { getOutputQuote } = require("./quoter");
+const {
+  abi: NonfungiblePositionManagerABI,
+} = require("@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json");
 
 async function getCurrentPosition() {}
 
@@ -70,8 +73,7 @@ async function mintNewPosition(token0, token1, fee, amount0, amount1) {
     poolContract.liquidity(),
     poolContract.slot0(),
   ]);
-
-  const configuredPool = new Pool(
+  const pool = new Pool(
     tokenA,
     tokenB,
     fee,
@@ -80,46 +82,39 @@ async function mintNewPosition(token0, token1, fee, amount0, amount1) {
     slot0.tick
   );
 
+  const tickSpacing = pool.tickSpacing;
   const tickLower =
-    nearestUsableTick(configuredPool.tickCurrent, configuredPool.tickSpacing) -
-    configuredPool.tickSpacing * 2;
+    TickMath.MIN_TICK + tickSpacing - (TickMath.MIN_TICK % tickSpacing);
 
-  const tickUpper =
-    nearestUsableTick(configuredPool.tickCurrent, configuredPool.tickSpacing) +
-    configuredPool.tickSpacing * 2;
+  const tickUpper = TickMath.MAX_TICK - (TickMath.MAX_TICK % tickSpacing);
 
-  const position = Position.fromAmounts({
-    pool: configuredPool,
-    tickLower: tickLower,
-    tickUpper: tickUpper,
-    amount0: amount0,
-    amount1: amount1,
-    useFullPrecision: true,
-  });
-
-  const mintOptions = {
+  const params = {
+    token0,
+    token1,
+    fee,
+    tickLower,
+    tickUpper,
+    amount0Desired: amount0.toString(),
+    amount1Desired: amount1.toString(),
+    amount0Min: 0,
+    amount1Min: 0,
     recipient: getWalletAddress(),
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
-    slippageTolerance: new Percent(1_000, 10_000),
   };
-  const { calldata, value } = NonfungiblePositionManager.addCallParameters(
-    position,
-    mintOptions
-  );
 
-  const transaction = {
-    data: calldata,
-    to: NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId],
-    value: value,
-    from: getWalletAddress(),
-    maxFeePerGas: MAX_FEE_PER_GAS,
-    maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
-  };
+  console.log("Minting position with params: ", params);
 
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-  console.log(transaction);
-  const txRes = await wallet.sendTransaction(transaction);
-  console.log("Transaction hash: ", txRes.hash);
+  const nftManager = new ethers.Contract(
+    NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId],
+    NonfungiblePositionManagerABI,
+    wallet
+  );
+  const tx = await nftManager.mint(params, {
+    gasLimit: 3_000_000,
+  });
+  await tx.wait();
+  console.log("Transaction hash: ", tx.hash);
 }
 
 async function main() {
@@ -150,8 +145,8 @@ async function main() {
     WETH_ADDRESS,
     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
     3000,
-    ethers.utils.parseEther("0.1"),
-    ethers.utils.parseUnits("100", 6)
+    ethers.utils.parseEther("1"),
+    ethers.utils.parseUnits("3000", 6)
   );
   console.log(
     "After balance: ",

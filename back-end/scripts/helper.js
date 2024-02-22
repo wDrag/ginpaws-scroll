@@ -37,9 +37,7 @@ function fromReadableAmount(amount, decimals) {
 }
 
 function toReadableAmount(rawAmount, decimals) {
-  return ethers.utils
-    .formatUnits(rawAmount, decimals)
-    .slice(0, READABLE_FORM_LEN);
+  return ethers.utils.formatUnits(rawAmount, decimals);
 }
 
 function getProvider() {
@@ -120,12 +118,10 @@ async function getTokenTransferApproval(
       provider
     );
 
-    const transaction = await tokenContract.populateTransaction.approve(
-      toAddress,
-      fromReadableAmount(approveAmount, token.decimals).toString()
-    );
-
-    await wallet.sendTransaction(transaction);
+    const transaction = await tokenContract
+      .connect(wallet)
+      .approve(toAddress, approveAmount);
+    await transaction.wait();
     console.log(
       "Token Approval Transaction Sent, approved ",
       toReadableAmount(approveAmount, token.decimals),

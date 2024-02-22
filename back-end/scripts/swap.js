@@ -131,7 +131,13 @@ async function swap(
       outputAmount: CurrencyAmount.fromRawAmount(tokenB, amountOut),
       tradeType: TradeType.EXACT_OUTPUT,
     });
-    await getTokenTransferApproval(tokenA, amountIn);
+    await getTokenTransferApproval(
+      tokenA,
+      BigInt(
+        (BigInt(uncheckedTrade.inputAmount.quotient.toString()) * BigInt(101)) /
+          BigInt(100)
+      ).toString()
+    );
   }
 
   const options = {
@@ -190,7 +196,7 @@ async function main() {
     3000,
     0,
     0,
-    fromReadableAmount(1000, 6).toString(),
+    ethers.utils.parseUnits("1000", 6),
     ethers.utils.parseEther("1"),
     1
   );
