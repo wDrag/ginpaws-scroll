@@ -27,6 +27,8 @@ const {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
   fromReadableAmount,
+  DAI_ADDRESS,
+  USDC_ADDRESS,
 } = require("./helper");
 const {
   Token,
@@ -181,7 +183,7 @@ async function main() {
   // });
   // await swap(
   //   WETH_ADDRESS,
-  //   "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+  //   USDC_ADDRESS, // USDC
   //   3000,
   //   ethers.utils.parseEther("0.1"),
   //   0,
@@ -192,12 +194,23 @@ async function main() {
 
   await swap(
     WETH_ADDRESS,
-    "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+    USDC_ADDRESS, // USDC
     3000,
     0,
     0,
-    ethers.utils.parseUnits("1000", 6),
-    ethers.utils.parseEther("1"),
+    ethers.utils.parseUnits("10000", 6),
+    ethers.utils.parseEther("100"),
+    1
+  );
+
+  await swap(
+    WETH_ADDRESS,
+    DAI_ADDRESS,
+    3000,
+    0,
+    0,
+    ethers.utils.parseUnits("10000", 18),
+    ethers.utils.parseEther("100"),
     1
   );
 }

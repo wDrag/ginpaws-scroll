@@ -12,11 +12,13 @@ async function main() {
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
   await wallet.sendTransaction({
     to: WETH_ADDRESS,
-    value: ethers.utils.parseEther("10"),
+    value: ethers.utils.parseEther("1000"),
   });
   console.log(
     "After balance: ",
-    (await WETH_Contract.balanceOf(process.env.WALLET_ADDRESS)).toString()
+    ethers.utils
+      .formatEther(await WETH_Contract.balanceOf(process.env.WALLET_ADDRESS))
+      .toString()
   );
 }
 main();
