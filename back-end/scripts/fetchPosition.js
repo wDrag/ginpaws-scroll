@@ -9,6 +9,7 @@ const {
   FACTORY_ADDRESS,
   getPoolInfo,
   getWalletAddress,
+  getProvider,
 } = require("./helper");
 const {
   Token,
@@ -18,24 +19,9 @@ const ERC20ABI = require("../abi/ERC20.json");
 
 const INONFUNGIBLE_POSITION_MANAGER = require("@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json");
 
-async function fetchPostions(tokenIn, tokenOut) {
+async function fetchPostions() {
   const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   const chainId = (await provider.getNetwork()).chainId;
-
-  const tokenA = new Token(
-    chainId,
-    tokenIn,
-    await new ethers.Contract(tokenIn, ERC20ABI, provider).callStatic.decimals()
-  );
-  const tokenB = new Token(
-    chainId,
-    tokenOut,
-    await new ethers.Contract(
-      tokenOut,
-      ERC20ABI,
-      provider
-    ).callStatic.decimals()
-  );
 
   const nfpmContract = new ethers.Contract(
     NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId],
@@ -54,8 +40,9 @@ async function fetchPostions(tokenIn, tokenOut) {
     positionCalls.push(nfpmContract.callStatic.positions(id));
   }
   const positions = await Promise.all(positionCalls);
-  const positionInfos = positions.map((position) => {
+  const positionInfos = positions.map((position, id) => {
     return {
+      positionId: parseInt(positionIds[id].toString()),
       tickLower: position.tickLower,
       tickUpper: position.tickUpper,
       liquidity: BigInt(position.liquidity),
@@ -65,16 +52,12 @@ async function fetchPostions(tokenIn, tokenOut) {
       tokensOwed1: BigInt(position.tokensOwed1),
     };
   });
-  console.log(positionInfos);
+  return positionInfos;
 }
-
 module.exports = {
   fetchPostions,
 };
-fetchPostions(
-  WETH_ADDRESS,
-  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" // USDC
-);
+// fetchPostions();
 
 // async function main() {
 //   console.log(
