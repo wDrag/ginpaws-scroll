@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node scripts/getWETH.js && node scripts/swap.js && node scripts/mint.js",
+    "add-liquidity": "node scripts/addLiquidity.js",
+    "remove-liquidity": "node scripts/removeLiquidity.js"
   },
   "keywords": [],
   "author": "",

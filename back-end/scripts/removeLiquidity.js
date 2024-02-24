@@ -16,7 +16,7 @@ const {
   abi: NonfungiblePositionManagerABI,
 } = require("@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json");
 const { fetchPostions } = require("./fetchPosition");
-const { DENOMINATOR } = require("./LP_Helper");
+const { DENOMINATOR, MAX_UINT128 } = require("./LP_Helper");
 
 async function removeLiquidity(tokenId, token0, token1, fee, removePercent) {
   const provider = getProvider();
@@ -40,7 +40,7 @@ async function removeLiquidity(tokenId, token0, token1, fee, removePercent) {
   const positionInfo = await nftPositionManager.callStatic.positions(tokenId);
   const liquidity = positionInfo.liquidity;
 
-  const params = {
+  const removeParams = {
     tokenId,
     liquidity: (
       (BigInt(liquidity) / BigInt(DENOMINATOR)) *
@@ -50,14 +50,32 @@ async function removeLiquidity(tokenId, token0, token1, fee, removePercent) {
     amount1Min: 0,
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
   };
+
+  const collectParams = {
+    tokenId,
+    recipient: getWalletAddress(),
+    amount0Max: MAX_UINT128,
+    amount1Max: MAX_UINT128,
+  };
+
   const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
+
+  const encodedRemoveParams = nftPositionManager.interface.encodeFunctionData(
+    "decreaseLiquidity",
+    [removeParams]
+  );
+  const encodedCollectParams = nftPositionManager.interface.encodeFunctionData(
+    "collect",
+    [collectParams]
+  );
+
   const tx = await nftPositionManager
     .connect(wallet)
-    .decreaseLiquidity(params, {
+    .multicall([encodedRemoveParams, encodedCollectParams], {
       gasLimit: 1_000_000,
     });
   await tx.wait();
-  console.log("Liquidity added");
+  console.log("Liquidity removed");
   console.log("Transaction hash: ", tx.hash);
 }
 

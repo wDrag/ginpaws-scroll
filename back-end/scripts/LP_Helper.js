@@ -9,6 +9,8 @@ const { ethers } = require("ethers");
 const IUniswapV3PoolABI = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
 const DENOMINATOR = 10_000;
 
+const MAX_UINT128 = "340282366920938463463374607431768211455";
+
 async function constructPool(tokenA, tokenB, fee, amount0, amount1, provider) {
   if (!provider) {
     provider = getProvider();
@@ -54,5 +56,6 @@ async function constructPool(tokenA, tokenB, fee, amount0, amount1, provider) {
 
 module.exports = {
   constructPool,
+  MAX_UINT128,
   DENOMINATOR,
 };
