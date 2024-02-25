@@ -12,10 +12,7 @@ import '@uniswap/v3-periphery/contracts/base/LiquidityManagement.sol';
 import 'forge-std/console.sol';
 
 contract LiquidityHelper is IERC721Receiver {
-    address public immutable firstToken;
-    address public immutable secondToken;
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
-    uint24 public constant poolFee = 3000;
 
     /// @notice Represents the deposit of an NFT
     struct Deposit {
@@ -25,13 +22,33 @@ contract LiquidityHelper is IERC721Receiver {
         address token1;
     }
 
+    struct RemoveLPParams{
+        uint256 removeTokenId;
+        uint128 removeAmount;
+    }
+
+    struct AddLPParams {
+        uint addTokenId;
+        uint256 addAmount0;
+        uint256 addAmount1;
+    }
+
+    struct MintLPParams{
+        address token0;
+        address token1;
+        uint24 fee;
+        int24 tickLower;
+        int24 tickUpper;
+        uint256 amount0Desired;
+        uint256 amount1Desired;
+        address recipient;
+    }
+
     /// @dev deposits[tokenId] => Deposit
     mapping(uint256 => Deposit) public deposits;
 
-    constructor(INonfungiblePositionManager _nonfungiblePositionManager, address _firstToken, address _secondToken) {
+    constructor(INonfungiblePositionManager _nonfungiblePositionManager) {
         nonfungiblePositionManager = _nonfungiblePositionManager;
-        firstToken = _firstToken;
-        secondToken = _secondToken;
     }
 
     // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
@@ -57,13 +74,7 @@ contract LiquidityHelper is IERC721Receiver {
         deposits[tokenId] = Deposit({owner: owner, liquidity: liquidity, token0: token0, token1: token1});
     }
 
-    /// @notice Calls the mint function defined in periphery, mints the same amount of each token.
-    /// For this example we are providing 1000 DAI and 1000 USDC in liquidity
-    /// @return tokenId The id of the newly minted ERC721
-    /// @return liquidity The amount of liquidity for the position
-    /// @return amount0 The amount of token0
-    /// @return amount1 The amount of token1
-    function mintNewPosition(uint256 amount0ToMint, uint256 amount1ToMint)
+    function mintNewPosition(MintLPParams memory params)
         external
         returns (
             uint256 tokenId,
@@ -74,45 +85,45 @@ contract LiquidityHelper is IERC721Receiver {
     {
 
         // transfer tokens to contract
-        TransferHelper.safeTransferFrom(firstToken, msg.sender, address(this), amount0ToMint);
-        TransferHelper.safeTransferFrom(secondToken, msg.sender, address(this), amount1ToMint);
+        TransferHelper.safeTransferFrom(params.token0, msg.sender, address(this), params.amount0Desired);
+        TransferHelper.safeTransferFrom(params.token1, msg.sender, address(this), params.amount1Desired);
 
         // Approve the position manager
-        TransferHelper.safeApprove(firstToken, address(nonfungiblePositionManager), amount0ToMint);
-        TransferHelper.safeApprove(secondToken, address(nonfungiblePositionManager), amount1ToMint);
+        TransferHelper.safeApprove(params.token0, address(nonfungiblePositionManager), params.amount0Desired);
+        TransferHelper.safeApprove(params.token1, address(nonfungiblePositionManager), params.amount1Desired);
 
-        INonfungiblePositionManager.MintParams memory params =
+        INonfungiblePositionManager.MintParams memory mintParams =
             INonfungiblePositionManager.MintParams({
-                token0: firstToken,
-                token1: secondToken,
-                fee: poolFee,
-                tickLower: (TickMath.MIN_TICK + 60) - (TickMath.MIN_TICK + 60) % 60,
-                tickUpper: (TickMath.MAX_TICK - 60) - (TickMath.MAX_TICK - 60) % 60,
-                amount0Desired: amount0ToMint,
-                amount1Desired: amount1ToMint,
+                token0: params.token0,
+                token1: params.token1,
+                fee: params.fee,
+                tickLower: params.tickLower,
+                tickUpper: params.tickUpper,
+                amount0Desired: params.amount0Desired,
+                amount1Desired: params.amount1Desired,
                 amount0Min: 0,
                 amount1Min: 0,
                 recipient: address(this),
                 deadline: block.timestamp + 1 hours
             });
         // Note that the pool defined by DAI/USDC and fee tier 0.3% must already be created and initialized in order to mint
-        (tokenId, liquidity, amount0, amount1) = nonfungiblePositionManager.mint(params);
+        (tokenId, liquidity, amount0, amount1) = nonfungiblePositionManager.mint(mintParams);
 
         // Create a deposit
         _createDeposit(msg.sender, tokenId);
         // Remove allowance and refund in both assets.
         console.log("amount0", amount0);
         console.log("amount1", amount1);
-        if (amount0 < amount0ToMint) {
-            TransferHelper.safeApprove(firstToken, address(nonfungiblePositionManager), 0);
-            uint256 refund0 = amount0ToMint - amount0;
-            TransferHelper.safeTransfer(firstToken, msg.sender, refund0);
+        if (amount0 < params.amount0Desired) {
+            TransferHelper.safeApprove(params.token0, address(nonfungiblePositionManager), 0);
+            uint256 refund0 = params.amount0Desired - amount0;
+            TransferHelper.safeTransfer(params.token0, msg.sender, refund0);
         }
 
-        if (amount1 < amount1ToMint) {
-            TransferHelper.safeApprove(secondToken, address(nonfungiblePositionManager), 0);
-            uint256 refund1 = amount1ToMint - amount1;
-            TransferHelper.safeTransfer(secondToken, msg.sender, refund1);
+        if (amount1 < params.amount1Desired) {
+            TransferHelper.safeApprove(params.token1, address(nonfungiblePositionManager), 0);
+            uint256 refund1 = params.amount1Desired - amount1;
+            TransferHelper.safeTransfer(params.token1, msg.sender, refund1);
         }
     }
 
@@ -140,35 +151,23 @@ contract LiquidityHelper is IERC721Receiver {
         _sendToOwner(tokenId, amount0, amount1);
     }
 
-    /// @notice A function that decreases the current liquidity by half. An example to show how to call the `decreaseLiquidity` function defined in periphery.
-    /// @param tokenId The id of the erc721 token
-    /// @return amount0 The amount received back in token0
-    /// @return amount1 The amount returned back in token1
-    function decreaseLiquidityCurrentRange(
-        uint tokenId,
-        uint128 liquidity
+    function removeLiquidity(
+        RemoveLPParams calldata params
     ) external returns (uint amount0, uint amount1) {
         INonfungiblePositionManager.DecreaseLiquidityParams
-            memory params = INonfungiblePositionManager.DecreaseLiquidityParams({
-                tokenId: tokenId,
-                liquidity: liquidity,
+            memory removeParams = INonfungiblePositionManager.DecreaseLiquidityParams({
+                tokenId: params.removeTokenId,
+                liquidity: params.removeAmount,
                 amount0Min: 0,
                 amount1Min: 0,
                 deadline: block.timestamp
             });
 
-        (amount0, amount1) = nonfungiblePositionManager.decreaseLiquidity(params);
+        (amount0, amount1) = nonfungiblePositionManager.decreaseLiquidity(removeParams);
     }
 
-    /// @notice Increases liquidity in the current range
-    /// @dev Pool must be initialized already to add liquidity
-    /// @param tokenId The id of the erc721 token
-    /// @param amount0 The amount to add of token0
-    /// @param amount1 The amount to add of token1
-    function increaseLiquidityCurrentRange(
-        uint256 tokenId,
-        uint256 amountAdd0,
-        uint256 amountAdd1
+    function addLiquidity(
+        AddLPParams calldata params
     )
         external
         returns (
@@ -177,22 +176,24 @@ contract LiquidityHelper is IERC721Receiver {
             uint256 amount1
         ) {
 
-        TransferHelper.safeTransferFrom(deposits[tokenId].token0, msg.sender, address(this), amountAdd0);
-        TransferHelper.safeTransferFrom(deposits[tokenId].token1, msg.sender, address(this), amountAdd1);
+        uint256 tokenId = params.addTokenId;
 
-        TransferHelper.safeApprove(deposits[tokenId].token0, address(nonfungiblePositionManager), amountAdd0);
-        TransferHelper.safeApprove(deposits[tokenId].token1, address(nonfungiblePositionManager), amountAdd1);
+        TransferHelper.safeTransferFrom(deposits[tokenId].token0, msg.sender, address(this), params.addAmount0);
+        TransferHelper.safeTransferFrom(deposits[tokenId].token1, msg.sender, address(this), params.addAmount1);
 
-        INonfungiblePositionManager.IncreaseLiquidityParams memory params = INonfungiblePositionManager.IncreaseLiquidityParams({
+        TransferHelper.safeApprove(deposits[tokenId].token0, address(nonfungiblePositionManager), params.addAmount0);
+        TransferHelper.safeApprove(deposits[tokenId].token1, address(nonfungiblePositionManager), params.addAmount1);
+
+        INonfungiblePositionManager.IncreaseLiquidityParams memory addParams = INonfungiblePositionManager.IncreaseLiquidityParams({
             tokenId: tokenId,
-            amount0Desired: amountAdd0,
-            amount1Desired: amountAdd1,
+            amount0Desired: params.addAmount0,
+            amount1Desired: params.addAmount1,
             amount0Min: 0,
             amount1Min: 0,
             deadline: block.timestamp
         });
 
-        (liquidity, amount0, amount1) = nonfungiblePositionManager.increaseLiquidity(params);
+        (liquidity, amount0, amount1) = nonfungiblePositionManager.increaseLiquidity(addParams);
 
     }
 
