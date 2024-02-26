@@ -5,8 +5,9 @@ pragma abicoder v2;
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 
-import "../src/Liquidity.sol";
-import "../src/Swap.sol";
+import "../src/LiquidityHelperFactory.sol";
+import "../src/LiquidityHelper.sol";
+import "../src/SwapHelper.sol";
 
 contract UniswapV3LiquidityTest is Test {
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
@@ -20,11 +21,11 @@ contract UniswapV3LiquidityTest is Test {
     IERC20 private constant usdc = IERC20(USDC);
     IERC20 private constant dai = IERC20(DAI);
 
+    LiquidityFactory private LPFac = new LiquidityFactory();
+
     LiquidityHelper private liquid =
-        new LiquidityHelper(
-            INonfungiblePositionManager(
-                0xC36442b4a4522E871399CD717aBDD847Ab11FE88
-            )
+        LiquidityHelper(
+            LPFac.createLiquidityHelper(0xC36442b4a4522E871399CD717aBDD847Ab11FE88)
         );
     SwapHelper private swap = new SwapHelper();
 
