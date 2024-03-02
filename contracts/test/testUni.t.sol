@@ -8,50 +8,73 @@ import "forge-std/console.sol";
 import "../src/LiquidityHelperFactory.sol";
 import "../src/LiquidityHelper.sol";
 import "../src/SwapHelper.sol";
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
-contract UniswapV3LiquidityTest is Test {
+contract TestLPAggreator is Test {
+    using SafeERC20 for IERC20;
     address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant WETH9 = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
+
     address private constant DAI_WHALE =
-        0xe81D6f03028107A20DBc83176DA82aE8099E9C42;
+        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private constant USDC_WHALE =
-        0xe81D6f03028107A20DBc83176DA82aE8099E9C42;
+        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address private constant WETH9_WHALE =
+        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address private constant USDT_WHALE =
+        0x78C10214227E1489FB2f50D533814d77Ceb5A98a;
+
+    address private constant UNISWAP_NFT_POSITION_MANAGER =
+        0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
+
+    address private constant UNISWAP_ROUTER =
+        0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     IERC20 private constant usdc = IERC20(USDC);
     IERC20 private constant dai = IERC20(DAI);
+    IERC20 private constant weth = IERC20(WETH9);
+    IERC20 private constant usdt = IERC20(USDT);
 
     LiquidityFactory private LPFac = new LiquidityFactory();
 
-    LiquidityHelper private liquid =
+    LiquidityHelper private uniLiquidityHelper =
         LiquidityHelper(
-            LPFac.createLiquidityHelper(0xC36442b4a4522E871399CD717aBDD847Ab11FE88)
+            LPFac.createLiquidityHelper(UNISWAP_NFT_POSITION_MANAGER)
         );
+
     SwapHelper private swap = new SwapHelper();
 
     function setUp() public {
+        uint256 usdtAmount = 50 * 1e6;
         uint256 daiAmount = 50 * 1e18;
         uint256 usdcAmount = 50 * 1e6;
+        uint256 wethAmount = 3 * 1e18;
+
+        assert(usdt.balanceOf(USDT_WHALE) >= usdtAmount);
+
         vm.prank(DAI_WHALE);
         dai.transfer(address(this), daiAmount);
 
         vm.prank(USDC_WHALE);
         usdc.transfer(address(this), usdcAmount);
 
-        dai.approve(address(liquid), daiAmount);
-        usdc.approve(address(liquid), usdcAmount);
+        vm.prank(WETH9_WHALE);
+        weth.transfer(address(this), wethAmount);
 
-        console.log("address: ", address(this));
-        console.log("DAI WHALE", dai.balanceOf(DAI_WHALE));
-        console.log("DAI balance", dai.balanceOf(address(this)));
-        console.log("USDC WHALE", usdc.balanceOf(USDC_WHALE));
-        console.log("USDC balance", usdc.balanceOf(address(this)));
+        vm.prank(USDT_WHALE);
+        usdt.safeTransfer(address(this), usdtAmount);
 
-        assertEq(dai.balanceOf(address(this)), daiAmount);
-        assertEq(usdc.balanceOf(address(this)), usdcAmount);
+        dai.approve(address(uniLiquidityHelper), daiAmount);
+        usdc.approve(address(uniLiquidityHelper), usdcAmount);
+        weth.approve(address(uniLiquidityHelper), wethAmount);
+        usdt.safeApprove(address(uniLiquidityHelper), usdtAmount);
     }
 
-    function testLiquidity() public {
+    // fee: 3000, tickSpacing: 60
+    function testLiquidityUniSwap() public {
         uint256 daiAmount = 10 * 1e18;
         uint256 usdcAmount = 10 * 1e6;
         // Track total liquidity
@@ -74,7 +97,7 @@ contract UniswapV3LiquidityTest is Test {
             uint128 liquidityDelta,
             uint amount0,
             uint amount1
-        ) = liquid.mintNewPosition(mintParams);
+        ) = uniLiquidityHelper.mintNewPosition(mintParams);
         liquidity += liquidityDelta;
 
         console.log("--- Mint new position ---");
@@ -84,7 +107,7 @@ contract UniswapV3LiquidityTest is Test {
         console.log("amount 1", amount1);
 
         // Collect fees
-        (uint fee0, uint fee1) = liquid.collectAllFees(tokenId);
+        (uint fee0, uint fee1) = uniLiquidityHelper.collectAllFees(tokenId);
 
         console.log("--- Collect fees ---");
         console.log("fee 0", fee0);
@@ -96,7 +119,9 @@ contract UniswapV3LiquidityTest is Test {
         LiquidityHelper.AddLPParams memory addParams = LiquidityHelper
             .AddLPParams(tokenId, daiAmountToAdd, usdcAmountToAdd);
 
-        (liquidityDelta, amount0, amount1) = liquid.addLiquidity(addParams);
+        (liquidityDelta, amount0, amount1) = uniLiquidityHelper.addLiquidity(
+            addParams
+        );
         liquidity += liquidityDelta;
 
         console.log("--- Increase liquidity ---");
@@ -107,21 +132,21 @@ contract UniswapV3LiquidityTest is Test {
         //Decrease liquidity
         LiquidityHelper.RemoveLPParams memory removeParams = LiquidityHelper
             .RemoveLPParams(tokenId, liquidity / 2);
-        (amount0, amount1) = liquid.removeLiquidity(removeParams);
+        (amount0, amount1) = uniLiquidityHelper.removeLiquidity(removeParams);
         console.log("--- Decrease liquidity ---");
         console.log("amount 0", amount0);
         console.log("amount 1", amount1);
     }
 
-    function testSwapExactInputSingle() public {
-        dai.approve(address(swap), 1 * 1e18);
+    function testSwapExactInputSingleUniSwap() public {
+        dai.approve(address(swap), 10 * 1e18);
         SwapHelper.SwapParams memory tradeInfo = SwapHelper.SwapParams(
             DAI,
             USDC,
             3000,
             address(this),
             block.timestamp + 1000,
-            1 * 1e18,
+            10 * 1e18,
             0,
             0,
             0,
@@ -131,13 +156,13 @@ contract UniswapV3LiquidityTest is Test {
         SwapHelper.TradeParams memory params = SwapHelper.TradeParams(
             SwapHelper.SwapType.EXACT_INPUT,
             tradeInfo,
-            0xE592427A0AEce92De3Edee1F18E0157C05861564
+            UNISWAP_ROUTER
         );
         uint256 amountOut = swap.swapWithRouter(params);
         console.log("amount out", amountOut);
     }
 
-    function testSwapExactOutputSingle() public {
+    function testSwapExactOutputSingleUniSwap() public {
         dai.approve(address(swap), 2 * 1e18);
         SwapHelper.SwapParams memory tradeInfo = SwapHelper.SwapParams(
             DAI,
@@ -155,13 +180,13 @@ contract UniswapV3LiquidityTest is Test {
         SwapHelper.TradeParams memory params = SwapHelper.TradeParams(
             SwapHelper.SwapType.EXACT_OUTPUT,
             tradeInfo,
-            0xE592427A0AEce92De3Edee1F18E0157C05861564
+            UNISWAP_ROUTER
         );
         uint256 amountIn = swap.swapWithRouter(params);
         console.log("amount in", amountIn);
     }
 
-    function testSwapExactInputMultihop() public {
+    function testSwapExactInputMultihopUniSwap() public {
         dai.approve(address(swap), 1 * 1e18);
         uint24 fee = 3000;
         SwapHelper.SwapParams memory tradeInfo = SwapHelper.SwapParams(
@@ -180,13 +205,13 @@ contract UniswapV3LiquidityTest is Test {
         SwapHelper.TradeParams memory params = SwapHelper.TradeParams(
             SwapHelper.SwapType.EXACT_INPUT_MULTIHOP,
             tradeInfo,
-            0xE592427A0AEce92De3Edee1F18E0157C05861564
+            UNISWAP_ROUTER
         );
         uint256 amountOut = swap.swapWithRouter(params);
         console.log("amount out", amountOut);
     }
 
-    function testSwapExactOutputMultihop() public {
+    function testSwapExactOutputMultihopUniSwap() public {
         dai.approve(address(swap), 2 * 1e18);
         uint24 fee = 3000;
         SwapHelper.SwapParams memory tradeInfo = SwapHelper.SwapParams(
@@ -205,7 +230,7 @@ contract UniswapV3LiquidityTest is Test {
         SwapHelper.TradeParams memory params = SwapHelper.TradeParams(
             SwapHelper.SwapType.EXACT_OUTPUT_MULTIHOP,
             tradeInfo,
-            0xE592427A0AEce92De3Edee1F18E0157C05861564
+            UNISWAP_ROUTER
         );
         uint256 amountIn = swap.swapWithRouter(params);
         console.log("amount in", amountIn);

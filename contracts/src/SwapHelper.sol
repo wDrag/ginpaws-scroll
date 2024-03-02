@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "forge-std/console.sol";
 
 contract SwapHelper {
     enum SwapType {
@@ -189,16 +190,20 @@ contract SwapHelper {
                 amountOut: params.tradeInfo.amountOut,
                 amountInMaximum: params.tradeInfo.amountInMaximum
             });
-
         // Executes the swap, returning the amountIn actually spent.
         amountIn = ISwapRouter(params.SwapRouter).exactOutput(swapParams);
-
         // If the swap did not require the full amountInMaximum to achieve the exact amountOut then we refund msg.sender and approve the router to spend 0.
         if (amountIn < params.tradeInfo.amountInMaximum) {
             TransferHelper.safeApprove(params.tradeInfo.tokenIn, params.SwapRouter, 0);
-            TransferHelper.safeTransferFrom(
+            console.log("Amount in: ", amountIn);
+            // TransferHelper.safeTransferFrom(
+            //     params.tradeInfo.tokenIn,
+            //     address(this),
+            //     params.tradeInfo.recipient,
+            //     params.tradeInfo.amountInMaximum - amountIn
+            // );
+            TransferHelper.safeTransfer(
                 params.tradeInfo.tokenIn,
-                address(this),
                 params.tradeInfo.recipient,
                 params.tradeInfo.amountInMaximum - amountIn
             );
