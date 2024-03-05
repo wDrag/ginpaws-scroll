@@ -18,18 +18,9 @@ const {
 const { fetchPostions } = require("./fetchPosition");
 const { DENOMINATOR, MAX_UINT128 } = require("./LP_Helper");
 
-async function removeLiquidity(tokenId, token0, token1, fee, removePercent) {
+async function removeLiquidity(tokenId, removePercent, recipient) {
   const provider = getProvider();
   const chainId = (await provider.getNetwork()).chainId;
-  const tokenA = await makeToken(token0);
-  const tokenB = await makeToken(token1);
-  console.log(
-    `Removing ${(removePercent / DENOMINATOR) * 100}% for: `,
-    tokenA.symbol,
-    tokenB.symbol,
-    fee
-  );
-  console.log();
 
   const nftPositionManager = new ethers.Contract(
     NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId],
@@ -53,12 +44,10 @@ async function removeLiquidity(tokenId, token0, token1, fee, removePercent) {
 
   const collectParams = {
     tokenId,
-    recipient: getWalletAddress(),
+    recipient: recipient,
     amount0Max: MAX_UINT128,
     amount1Max: MAX_UINT128,
   };
-
-  const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
 
   const encodedRemoveParams = nftPositionManager.interface.encodeFunctionData(
     "decreaseLiquidity",
@@ -68,15 +57,23 @@ async function removeLiquidity(tokenId, token0, token1, fee, removePercent) {
     "collect",
     [collectParams]
   );
+  // return [encodedRemoveParams, encodedCollectParams];
 
-  const tx = await nftPositionManager
-    .connect(wallet)
-    .multicall([encodedRemoveParams, encodedCollectParams], {
-      gasLimit: 1_000_000,
-    });
-  await tx.wait();
-  console.log("Liquidity removed");
-  console.log("Transaction hash: ", tx.hash);
+  return [
+    removeParams,
+    collectParams,
+    encodedRemoveParams,
+    encodedCollectParams,
+  ];
+
+  // const tx = await nftPositionManager
+  //   .connect(wallet)
+  //   .multicall([encodedRemoveParams, encodedCollectParams], {
+  //     gasLimit: 1_000_000,
+  //   });
+  // await tx.wait();
+  // console.log("Liquidity removed");
+  // console.log("Transaction hash: ", tx.hash);
 }
 
 async function main() {
@@ -107,4 +104,8 @@ async function main() {
     ethers.utils.formatUnits(await getBalance(USDC_Contract, walletAddress), 6)
   );
 }
-main();
+// main();
+
+module.exports = {
+  removeLiquidity,
+};

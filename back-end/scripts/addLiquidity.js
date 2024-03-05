@@ -5,48 +5,31 @@ const {
   getTokenTransferApproval,
   makeToken,
   getBalance,
-  toReadableAmount,
   USDC_ADDRESS,
   DAI_ADDRESS,
 } = require("./helper");
 const ERC20ABI = require("../abi/ERC20.json");
 
 const { NONFUNGIBLE_POSITION_MANAGER_ADDRESSES } = require("@uniswap/sdk-core");
-const IUniswapV3PoolABI = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
-const {
-  abi: NonfungiblePositionManagerABI,
-} = require("@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json");
 const { fetchPostions } = require("./fetchPosition");
 
-async function addLiquidity(tokenId, token0, token1, fee, amount0, amount1) {
-  const provider = getProvider();
-  const chainId = (await provider.getNetwork()).chainId;
-  const tokenA = await makeToken(token0);
-  const tokenB = await makeToken(token1);
-  console.log("Adding liquidity for: ", tokenA.symbol, tokenB.symbol, fee);
-  console.log(
-    "Amounts: ",
-    toReadableAmount(amount0.toString(), tokenA.decimals),
-    toReadableAmount(amount1.toString(), tokenB.decimals)
-  );
+async function addLiquidity(tokenId, amount0, amount1) {
+  // const provider = getProvider();
+  // const chainId = (await provider.getNetwork()).chainId;
+  // const tokenA = await makeToken(token0);
+  // const tokenB = await makeToken(token1);
 
-  await getTokenTransferApproval(
-    tokenA,
-    amount0,
-    NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId]
-  );
+  // await getTokenTransferApproval(
+  //   tokenA,
+  //   amount0,
+  //   NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId]
+  // );
 
-  await getTokenTransferApproval(
-    tokenB,
-    amount1,
-    NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId]
-  );
-
-  const nftPositionManager = new ethers.Contract(
-    NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId],
-    NonfungiblePositionManagerABI,
-    provider
-  );
+  // await getTokenTransferApproval(
+  //   tokenB,
+  //   amount1,
+  //   NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId]
+  // );
 
   const params = {
     tokenId,
@@ -56,11 +39,12 @@ async function addLiquidity(tokenId, token0, token1, fee, amount0, amount1) {
     amount1Min: 0,
     deadline: Math.floor(Date.now() / 1000) + 60 * 20,
   };
-  const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
-  const tx = await nftPositionManager.connect(wallet).increaseLiquidity(params);
-  await tx.wait();
-  console.log("Liquidity added");
-  console.log("Transaction hash: ", tx.hash);
+  return params;
+  // const wallet = new Wallet(process.env.PRIVATE_KEY, provider);
+  // const tx = await nftPositionManager.connect(wallet).increaseLiquidity(params);
+  // await tx.wait();
+  // console.log("Liquidity added");
+  // console.log("Transaction hash: ", tx.hash);
 }
 
 async function main() {
@@ -92,4 +76,8 @@ async function main() {
     ethers.utils.formatUnits(await getBalance(USDC_Contract, walletAddress), 6)
   );
 }
-main();
+// main();
+
+module.exports = {
+  addLiquidity,
+};

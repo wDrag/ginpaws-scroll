@@ -19,7 +19,7 @@ const ERC20ABI = require("../abi/ERC20.json");
 
 const INONFUNGIBLE_POSITION_MANAGER = require("@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json");
 
-async function fetchPostions() {
+async function fetchPostions(walletAddress) {
   const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   const chainId = (await provider.getNetwork()).chainId;
 
@@ -28,7 +28,6 @@ async function fetchPostions() {
     INONFUNGIBLE_POSITION_MANAGER.abi,
     provider
   );
-  const walletAddress = getWalletAddress();
   const numPositions = await nfpmContract.callStatic.balanceOf(walletAddress);
   const calls = [];
   for (let i = 0; i < numPositions; i++) {
@@ -45,11 +44,11 @@ async function fetchPostions() {
       positionId: parseInt(positionIds[id].toString()),
       tickLower: position.tickLower,
       tickUpper: position.tickUpper,
-      liquidity: BigInt(position.liquidity),
-      feeGrowthInside0LastX128: BigInt(position.feeGrowthInside0LastX128),
-      feeGrowthInside1LastX128: BigInt(position.feeGrowthInside1LastX128),
-      tokensOwed0: BigInt(position.tokensOwed0),
-      tokensOwed1: BigInt(position.tokensOwed1),
+      liquidity: position.liquidity.toString(),
+      feeGrowthInside0LastX128: position.feeGrowthInside0LastX128.toString(),
+      feeGrowthInside1LastX128: position.feeGrowthInside1LastX128.toString(),
+      tokensOwed0: position.tokensOwed0.toString(),
+      tokensOwed1: position.tokensOwed1.toString(),
     };
   });
   return positionInfos;

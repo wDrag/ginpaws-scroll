@@ -22,29 +22,6 @@ const ERC20ABI = require("../abi/ERC20.json");
  */
 async function getOutputQuote(tokenIn, tokenOut, fee, amountIn) {
   const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-  const chainId = (await provider.getNetwork()).chainId;
-
-  const tokenA = new Token(
-    chainId,
-    tokenIn,
-    await new ethers.Contract(tokenIn, ERC20ABI, provider).callStatic.decimals()
-  );
-  const tokenB = new Token(
-    chainId,
-    tokenOut,
-    await new ethers.Contract(
-      tokenOut,
-      ERC20ABI,
-      provider
-    ).callStatic.decimals()
-  );
-  const currentPoolAddress = computePoolAddress({
-    factoryAddress: FACTORY_ADDRESS,
-    tokenA: tokenA,
-    tokenB: tokenB,
-    fee: fee,
-  });
-
   const quoterContract = new ethers.Contract(
     QUOTER_ADDRESS,
     Quoter.abi,

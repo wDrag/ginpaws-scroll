@@ -83,19 +83,20 @@ async function mintNewPosition(token0, token1, fee, amount0, amount1) {
   };
 
   console.log("Minting position with params: ", params);
+  return params;
 
-  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-  const nftManager = new ethers.Contract(
-    NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId],
-    NonfungiblePositionManagerABI,
-    wallet
-  );
-  const tx = await nftManager.mint(params, {
-    gasLimit: 3_000_000,
-  });
+  // const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  // const nftManager = new ethers.Contract(
+  //   NONFUNGIBLE_POSITION_MANAGER_ADDRESSES[chainId],
+  //   NonfungiblePositionManagerABI,
+  //   wallet
+  // );
+  // const tx = await nftManager.mint(params, {
+  //   gasLimit: 3_000_000,
+  // });
 
-  await tx.wait();
-  console.log("Transaction hash: ", tx.hash);
+  // await tx.wait();
+  // console.log("Transaction hash: ", tx.hash);
 }
 
 async function main() {
@@ -109,7 +110,6 @@ async function main() {
     " / ",
     ethers.utils.formatUnits(await getBalance(USDC_Contract, walletAddress), 6)
   );
-
 
   await mintNewPosition(
     DAI_ADDRESS,
@@ -126,4 +126,4 @@ async function main() {
     ethers.utils.formatUnits(await getBalance(USDC_Contract, walletAddress), 6)
   );
 }
-main();
+// main();
