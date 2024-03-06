@@ -23,6 +23,21 @@ async function swapLP(tokenRemoveId, removePercent, tokenAddId, recipient) {
     provider
   );
 
+  const removePool = await nftPositionManager.callStatic.positions(
+    tokenRemoveId
+  );
+
+  const [tokenRemove0, tokenRemove1] = [
+    removePool.token0.toString(),
+    removePool.token1.toString(),
+  ];
+
+  const addPool = await nftPositionManager.callStatic.positions(tokenAddId);
+  const [tokenAdd0, tokenAdd1] = [
+    addPool.token0.toString(),
+    addPool.token1.toString(),  
+  ];
+
   const expectedReturn = await nftPositionManager.callStatic.decreaseLiquidity(
     removeParams
   );
@@ -32,9 +47,11 @@ async function swapLP(tokenRemoveId, removePercent, tokenAddId, recipient) {
     expectedReturn[1].toString(),
   ];
 
-  const swapPair0Params = await swap();
-
-  return 0;
+  const swapPair0Params = await swap(
+    tokenRemove0,
+    tokenAdd0,
+    
+  );
 }
 
 async function main() {}

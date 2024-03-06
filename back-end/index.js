@@ -93,6 +93,44 @@ app.get("/api/v1/swapLP", async (req, res) => {
   res.status(200).json({ params });
 });
 
+app.get("/api/v2/swapLPQuote", async (req, res) => {
+  const { tokenRemove, tokenAdd, removePercent, recipient } = req.query;
+  const { swapLPQuote } = require("./v2/index");
+  const quote = await swapLPQuote(
+    tokenRemove,
+    removePercent,
+    tokenAdd,
+    recipient
+  );
+  res.status(200).json({ quote });
+});
+
+app.get("/api/v2/swapTokenForLP", async (req, res) => {
+  const { token, tokenAdd, amount, recipient } = req.query;
+  const { swapTokenForLP } = require("./v2/index");
+  const calldata = await swapTokenForLP(token, tokenAdd, amount, recipient);
+  res.status(200).json({ calldata });
+});
+
+app.get("/api/v2/swapLPForLP", async (req, res) => {
+  const { tokenRemove, tokenAdd, removePercent, recipient } = req.query;
+  const { swapLPForLP } = require("./v2/index");
+  const calldata = await swapLPForLP(
+    tokenRemove,
+    tokenAdd,
+    removePercent,
+    recipient
+  );
+  res.status(200).json({ calldata });
+});
+
+app.get("/api/v2/getUserPool", async (req, res) => {
+  const { walletAddress } = req.query;
+  const { getUserPool } = require("./v2/index");
+  const pools = await getUserPool(walletAddress);
+  res.status(200).json({ pools });
+});
+
 app.listen(9000, () => {
   console.log("Server running on port 9000");
 });
