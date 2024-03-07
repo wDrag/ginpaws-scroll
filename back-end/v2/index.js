@@ -202,6 +202,7 @@ async function getUserPool(walletAddress) {
     pools.push({
       token0: pairList[i].token0,
       token1: pairList[i].token1,
+      pairAddress: pairList[i].pairAddress,
       poolBalance: poolBalances[i].toString(),
       token0Pooled: token0Balances[i].toString(),
       token1Pooled: token1Balances[i].toString(),
