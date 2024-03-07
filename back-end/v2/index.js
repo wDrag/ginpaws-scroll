@@ -196,16 +196,16 @@ async function getUserPool(walletAddress) {
     if (poolBalances[i].toString() === "0") {
       continue;
     }
-    const A = BigInt(1_000_000) * BigInt(poolBalances[i].toString());
+    const A = BigInt(1_000_000_000_000) * BigInt(poolBalances[i].toString());
     const B = BigInt(totalSupplies[i].toString());
-    const C = parseFloat((A / B).toString()) / 10_000;
+    const C = parseFloat((A / B).toString()) / 10_000_000_000;
 
     const A0 =
-      (BigInt(10_000 * C) * BigInt(token0Balances[i].toString())) /
-      BigInt(1_000_000);
+      (BigInt(10_000_000_000 * C) * BigInt(token0Balances[i].toString())) /
+      BigInt(1_000_000_000_000);
     const A1 =
-      (BigInt(10_000 * C) * BigInt(token1Balances[i].toString())) /
-      BigInt(1_000_000);
+      (BigInt(10_000_000_000 * C) * BigInt(token1Balances[i].toString())) /
+      BigInt(1_000_000_000_000);
 
     pools.push({
       token0: pairList[i].token0,
