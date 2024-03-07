@@ -175,10 +175,10 @@ async function getUserPool(walletAddress) {
 
     poolBalancePromises.push(pairContract.callStatic.balanceOf(walletAddress));
     token0BalancePromises.push(
-      token0Contract.callStatic.balanceOf(walletAddress)
+      token0Contract.callStatic.balanceOf(pairAddress)
     );
     token1BalancePromises.push(
-      token1Contract.callStatic.balanceOf(walletAddress)
+      token1Contract.callStatic.balanceOf(pairAddress)
     );
     totalSupplyPromises.push(pairContract.callStatic.totalSupply());
   }
@@ -199,13 +199,21 @@ async function getUserPool(walletAddress) {
     const A = BigInt(1_000_000) * BigInt(poolBalances[i].toString());
     const B = BigInt(totalSupplies[i].toString());
     const C = parseFloat((A / B).toString()) / 10_000;
+
+    const A0 =
+      (BigInt(10_000 * C) * BigInt(token0Balances[i].toString())) /
+      BigInt(1_000_000);
+    const A1 =
+      (BigInt(10_000 * C) * BigInt(token1Balances[i].toString())) /
+      BigInt(1_000_000);
+
     pools.push({
       token0: pairList[i].token0,
       token1: pairList[i].token1,
       pairAddress: pairList[i].pairAddress,
       poolBalance: poolBalances[i].toString(),
-      token0Pooled: token0Balances[i].toString(),
-      token1Pooled: token1Balances[i].toString(),
+      token0Pooled: A0.toString(),
+      token1Pooled: A1.toString(),
       poolSharePercent: C,
     });
   }
