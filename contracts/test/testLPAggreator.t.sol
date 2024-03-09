@@ -130,4 +130,23 @@ contract TestLPAggreator is Test {
         (uint256 amountA, uint256 amountB, uint256 liquidityMinted) = lpAggreator.swapLP(removeParams, addParams);
         console.log('Swap liquidity success, amountA: %s, amountB: %s, liquidity: %s', amountA, amountB, liquidityMinted);
     }
+
+    function testAddLPFromToken() public {
+        console.log("--------------------");
+        deal(USDC, address(this), 1e6 * 1e18);
+
+        LPAggreator.AddLPParams memory addParams = LPAggreator.AddLPParams(
+            USDT,
+            CETH,
+            0, 
+            0,
+            0,
+            0,
+            address(this),
+            block.timestamp
+        );
+        IERC20(USDC).safeApprove(address(lpAggreator), 1e6 * 1e18);
+        (uint256 amountA, uint256 amountB, uint256 liquidityMinted) = lpAggreator.addLPFromToken(USDC, 1e6 * 1e18, addParams);
+        console.log('Add liquidity success, amountA: %s, amountB: %s, liquidity: %s', amountA, amountB, liquidityMinted);
+    }
 }
