@@ -10,7 +10,7 @@ const { getProvider } = require("../scripts/helper");
 const ROUTER_ADDRESS = "0x873789aaf553fd0b4252d0d2b72c6331c47aff2e";
 const FACTORY_ADDRESS = "0x36b83e0d41d1dd9c73a006f0c1cbc1f096e69e34";
 const WETH_ADDRESS = "0x2ed3dddae5b2f321af0806181fbfa6d049be47d8";
-const LP_AGGREGATOR_ADDRESS = "0xba31adfcedd64d276f0324d0881dd6c728147586";
+const LP_AGGREGATOR_ADDRESS = "0xa4a1d5534fa61d4394d39cceba2b070ad37dae52";
 const ROUTER_V2_ABI = require("./ABI/router_v2_abi.json");
 const FACTORY_V2_ABI = require("./ABI/factory_v2_abi.json");
 const { DENOMINATOR } = require("../scripts/LP_Helper");
@@ -288,6 +288,36 @@ async function getAllowance(token, owner, spender = LP_AGGREGATOR_ADDRESS) {
   return allowance.toString();
 }
 
+function getTokenToLPParams(
+  tokenIn,
+  amountIn,
+  tokenA,
+  tokenB,
+  sender,
+  isEncoded = true
+) {
+  const addParams = {
+    tokenA,
+    tokenB,
+    amountADesired: 0,
+    amountBDesired: 0,
+    amountAMin: 0,
+    amountBMin: 0,
+    to: sender,
+    deadline: Math.floor(Date.now() / 1000) + 60 * 10,
+  };
+  if (!isEncoded) {
+    return { to: LP_AGGREGATOR_ADDRESS, params };
+  }
+  const LP_Interface = new ethers.utils.Interface(LPAggreatorABI);
+  const calldata = LP_Interface.encodeFunctionData("addLPFromToken", [
+    tokenIn,
+    amountIn,
+    addParams,
+  ]);
+  return { to: LP_AGGREGATOR_ADDRESS, calldata };
+}
+
 async function approve(
   token,
   spender = LP_AGGREGATOR_ADDRESS,
@@ -316,6 +346,7 @@ module.exports = {
   getUserPool,
   getSwapParams,
   getAllowance,
+  getTokenToLPParams,
   approve,
   FACTORY_ADDRESS,
   WETH_ADDRESS,

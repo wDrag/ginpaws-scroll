@@ -160,6 +160,13 @@ app.get("/api/v2/getSwapParams", async (req, res) => {
   res.status(200).json({ params });
 });
 
+app.get("/api/v2/getTokenToLPParams", (req, res) => {
+  const { tokenIn, amountIn, tokenA, tokenB, sender } = req.query;
+  const { getTokenToLPParams } = require("./v2/index");
+  const params = getTokenToLPParams(tokenIn, amountIn, tokenA, tokenB, sender);
+  res.status(200).json({ params });
+});
+
 app.listen(9000, () => {
   console.log("Server running on port 9000");
 });
