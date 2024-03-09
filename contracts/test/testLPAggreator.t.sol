@@ -14,60 +14,87 @@ import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
 contract TestLPAggreator is Test {
     using SafeERC20 for IERC20;
-    address public constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant USDT = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-    IERC20 constant pair = IERC20(0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852);
-
-    address private constant DAI_WHALE =
-        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address private constant USDC_WHALE =
-        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address private constant WETH_WHALE =
-        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address private constant USDT_WHALE =
-        0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant CETH = 0x2ED3dddae5B2F321AF0806181FBFA6D049Be47d8;
+    address public constant USDT = 0x7d682e65EFC5C13Bf4E394B8f376C48e6baE0355;
+    address public constant USDC = 0x349298B0E20DF67dEFd6eFb8F3170cF4a32722EF;
 
     address private constant UNISWAP_ROUTER02_ADDRESS =
-        0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+        0x873789aaF553FD0B4252d0D2b72C6331c47aff2E;
     IUniswapV2Router02 private constant uniswapRouter =
         IUniswapV2Router02(UNISWAP_ROUTER02_ADDRESS);
     address private constant FACTORY =
-        0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f;
+        0x36B83E0D41D1dd9C73a006F0c1cbC1F096E69E34;
 
     LPAggreator lpAggreator = new LPAggreator();
 
-    IERC20 private constant usdc = IERC20(USDC);
-    IERC20 private constant dai = IERC20(DAI);
-    IERC20 private constant weth = IERC20(WETH);
+    IERC20 private constant ceth = IERC20(CETH);
     IERC20 private constant usdt = IERC20(USDT);
+    IERC20 private constant usdc = IERC20(USDC);
 
     uint256 private liquidity = 0;
 
-    function setUp() public payable {
-        deal(USDT, address(this), 1e6 * 1e6);
-        deal(WETH, address(this), 1e18 * 1e6);
+    function addLiquidityForPair(address tokenA, uint256 amountAToAdd, address tokenB, uint256 amountBToAdd) public {
+        console.log("--------------------");
+        IERC20(tokenA).safeApprove(UNISWAP_ROUTER02_ADDRESS, 0);
+        IERC20(tokenB).safeApprove(UNISWAP_ROUTER02_ADDRESS, 0);
+        deal(tokenA, address(this), amountAToAdd);
+        deal(tokenB, address(this), amountBToAdd);
         // Approve uni for transferring
-        usdt.safeApprove(UNISWAP_ROUTER02_ADDRESS, 1e6 * 1e6);
-        weth.safeApprove(UNISWAP_ROUTER02_ADDRESS, 1e18 * 1e6);
+        IERC20(tokenA).safeApprove(UNISWAP_ROUTER02_ADDRESS, amountAToAdd);
+        IERC20(tokenB).safeApprove(UNISWAP_ROUTER02_ADDRESS, amountBToAdd);
 
         (
             uint256 amountA,
             uint256 amountB,
             uint256 liquidityMinted
         ) = uniswapRouter.addLiquidity(
-                WETH,
-                USDT,
-                1e6 * 1e18,
-                1e6 * 1e6,
+                tokenA,
+                tokenB,
+                amountAToAdd,
+                amountBToAdd,
                 1,
                 1,
                 address(this),
                 block.timestamp
             );
 
-        liquidity = liquidityMinted;
+        console.log("Liquidity: %s", liquidityMinted);
+        console.log("amountA: %s, amountB: %s", amountA, amountB);
+    }
+
+    function setUp() public payable {
+        addLiquidityForPair(USDT, 1e6 * 1e18, CETH, 1e6 * 1e18);
+        addLiquidityForPair(USDC, 1e6 * 1e18, CETH, 1e6 * 1e18);
+
+        console.log("--------------------");
+        uint256 amountAToAdd = 10 * 1e18;
+        uint256 amountBToAdd = 10 * 1e18;
+        IERC20 pair = IERC20(IUniswapV2Factory(FACTORY).getPair(CETH, USDT));
+        console.log("pair address: %s", address(pair));
+        usdt.safeApprove(UNISWAP_ROUTER02_ADDRESS, 0);
+        ceth.safeApprove(UNISWAP_ROUTER02_ADDRESS, 0);
+        deal(USDT, address(this), amountAToAdd);
+        deal(CETH, address(this), amountBToAdd);
+        // Approve uni for transferring
+        usdt.safeApprove(UNISWAP_ROUTER02_ADDRESS, amountAToAdd);
+        ceth.safeApprove(UNISWAP_ROUTER02_ADDRESS, amountBToAdd);
+
+        (
+            uint256 amountA,
+            uint256 amountB,
+            uint256 liquidityMinted
+        ) = uniswapRouter.addLiquidity(
+                CETH,
+                USDT,
+                amountAToAdd,
+                amountBToAdd,
+                1,
+                1,
+                address(this),
+                block.timestamp
+            );
+
+        liquidity += liquidityMinted;
         console.log("Liquidity: %s", liquidity);
         console.log("amountA: %s, amountB: %s", amountA, amountB);
         console.log("pair balance: %s", pair.balanceOf(address(this)));
@@ -75,13 +102,14 @@ contract TestLPAggreator is Test {
     }
 
     function testSwapLP() public {
+        IERC20 pair = IERC20(IUniswapV2Factory(FACTORY).getPair(CETH, USDT));
         console.log("--------------------");
         console.log("pair balance: %s", pair.balanceOf(address(this)));
 
         LPAggreator.RemoveLPParams memory removeParams = LPAggreator
             .RemoveLPParams(
                 USDT,
-                WETH,
+                CETH,
                 liquidity,
                 0,
                 0,
@@ -89,8 +117,8 @@ contract TestLPAggreator is Test {
                 block.timestamp
             );
         LPAggreator.AddLPParams memory addParams = LPAggreator.AddLPParams(
-            DAI,
-            WETH,
+            USDC,
+            CETH,
             0,
             0,
             0,
