@@ -10,7 +10,7 @@ const { getProvider } = require("../scripts/helper");
 const ROUTER_ADDRESS = "0x873789aaf553fd0b4252d0d2b72c6331c47aff2e";
 const FACTORY_ADDRESS = "0x36b83e0d41d1dd9c73a006f0c1cbc1f096e69e34";
 const WETH_ADDRESS = "0x2ed3dddae5b2f321af0806181fbfa6d049be47d8";
-const LP_AGGREGATOR_ADDRESS = "0x249b1d69af3adea004de883c1cc3f4fba8baeec0";
+const LP_AGGREGATOR_ADDRESS = "0xba31adfcedd64d276f0324d0881dd6c728147586";
 const ROUTER_V2_ABI = require("./ABI/router_v2_abi.json");
 const FACTORY_V2_ABI = require("./ABI/factory_v2_abi.json");
 const { DENOMINATOR } = require("../scripts/LP_Helper");
@@ -247,7 +247,8 @@ async function getSwapParams(
   removePercent,
   tokenX,
   tokenY,
-  sender
+  sender,
+  isEncoded = true
 ) {
   const removeParams = await removeLiquidity(
     tokenA,
@@ -269,6 +270,9 @@ async function getSwapParams(
     deadline: Math.floor(Date.now() / 1000) + 60 * 10,
   };
 
+  if (!isEncoded) {
+    return { to: LP_AGGREGATOR_ADDRESS, removeParams, addParams };
+  }
   const LP_Interface = new ethers.utils.Interface(LPAggreatorABI);
   const calldata = LP_Interface.encodeFunctionData("swapLP", [
     removeParams,
