@@ -5,13 +5,13 @@
         "name": "Conflux",
         "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
         "decimals": 18
-    }, 
+    },
     {
-      "ticker": "WCFX",
+        "ticker": "WCFX",
         "img": "https://scan-icons.oss-cn-hongkong.aliyuncs.com/mainnet/0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b.png",
         "name": "Wrapped Conflux",
         "address": "0x2ed3dddae5b2f321af0806181fbfa6d049be47d8",
-        "decimals": 18  
+        "decimals": 18
     },
     {
         "ticker": "ETH",
@@ -39,7 +39,6 @@
         "img": "https://scan-icons.oss-cn-hongkong.aliyuncs.com/mainnet/0x1f545487c62e5acfea45dcadd9c627361d1616d8.png",
         "name": "Faucet Bitcoin",
         "address": "0x54593e02c39aeff52b166bd036797d2b1478de8d",
-        "decimals": 8
+        "decimals": 18
     }
-
 ]

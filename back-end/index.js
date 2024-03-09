@@ -113,11 +113,12 @@ app.get("/api/v2/swapTokenForLP", async (req, res) => {
 });
 
 app.get("/api/v2/swapLPForLP", async (req, res) => {
-  const { tokenRemove, tokenAdd, removePercent, recipient } = req.query;
+  const { tokenRemove, tokenAdd, removePercent, sender, recipient } = req.query;
   const { swapLPForLP } = require("./v2/index");
   const calldata = await swapLPForLP(
     tokenRemove,
     tokenAdd,
+    sender,
     removePercent,
     recipient
   );
@@ -129,6 +130,34 @@ app.get("/api/v2/getUserPool", async (req, res) => {
   const { getUserPool } = require("./v2/index");
   const pools = await getUserPool(walletAddress);
   res.status(200).json({ pools });
+});
+
+app.get("/api/v2/getAllowance", async (req, res) => {
+  const { token, owner } = req.query;
+  const { getAllowance } = require("./v2/index");
+  const allowance = await getAllowance(token, owner);
+  res.status(200).json({ allowance });
+});
+
+app.get("/api/v2/approve", async (req, res) => {
+  const { token } = req.query;
+  const { approve } = require("./v2/index");
+  const calldata = await approve(token);
+  res.status(200).json({ calldata });
+});
+
+app.get("/api/v2/getSwapParams", async (req, res) => {
+  const { tokenA, tokenB, removePercent, tokenX, tokenY, sender } = req.query;
+  const { getSwapParams } = require("./v2/index");
+  const params = await getSwapParams(
+    tokenA,
+    tokenB,
+    removePercent,
+    tokenX,
+    tokenY,
+    sender
+  );
+  res.status(200).json({ params });
 });
 
 app.listen(9000, () => {

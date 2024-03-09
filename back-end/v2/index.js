@@ -10,9 +10,11 @@ const { getProvider } = require("../scripts/helper");
 const ROUTER_ADDRESS = "0x873789aaf553fd0b4252d0d2b72c6331c47aff2e";
 const FACTORY_ADDRESS = "0x36b83e0d41d1dd9c73a006f0c1cbc1f096e69e34";
 const WETH_ADDRESS = "0x2ed3dddae5b2f321af0806181fbfa6d049be47d8";
+const LP_AGGREGATOR_ADDRESS = "0x249b1d69af3adea004de883c1cc3f4fba8baeec0";
 const ROUTER_V2_ABI = require("./ABI/router_v2_abi.json");
 const FACTORY_V2_ABI = require("./ABI/factory_v2_abi.json");
 const { DENOMINATOR } = require("../scripts/LP_Helper");
+const { abi: LPAggreatorABI } = require("./ABI/LPAggreator.json");
 
 const ROUTER_INTERFACE = new ethers.utils.Interface(ROUTER_V2_ABI);
 
@@ -29,6 +31,7 @@ function getRouterContract() {
   const router = new Contract(ROUTER_ADDRESS, routerArtifact.abi, provider);
   return router;
 }
+
 function buyTokenWithETH(tokenAddress, recipient) {
   const params = {
     amountOutMin: 0,
@@ -97,25 +100,35 @@ function addLiquidityETH(token, amountTokenDesired, recipient) {
   return ROUTER_INTERFACE.encodeFunctionData("addLiquidityETH", [params]);
 }
 
-async function removeLiquidity(tokenA, tokenB, removePercent, recipient) {
+async function removeLiquidity(
+  tokenA,
+  tokenB,
+  removePercent,
+  sender,
+  recipient,
+  isEncoded = true
+) {
   const provider = getProvider();
   const factory = new Contract(FACTORY_ADDRESS, factoryArtifact.abi, provider);
   const pairAddress = await factory.callStatic.getPair(tokenA, tokenB);
-  const pairContract = new Contract(pairAddress, pairArtifact.abi, provider);
-  const currentLiquidity = await pairContract.balanceOf(secret.walletAddress);
+  const pairContract = new Contract(pairAddress, ERC20_ABI, provider);
+  const currentLiquidity = await pairContract.callStatic.balanceOf(sender);
   const liquidityToRemove =
-    BigInt(currentLiquidity.toString()) *
-    (BigInt(removePercent) / BigInt(DENOMINATOR));
+    (BigInt(currentLiquidity.toString()) * BigInt(removePercent)) /
+    BigInt(DENOMINATOR);
 
   const params = {
     tokenA,
     tokenB,
-    liquidity: liquidityToRemove,
+    liquidity: liquidityToRemove.toString(),
     amountAMin: 0,
     amountBMin: 0,
     to: recipient,
     deadline: Math.floor(Date.now() / 1000) + 60 * 10,
   };
+  if (!isEncoded) {
+    return params;
+  }
   return ROUTER_INTERFACE.encodeFunctionData("removeLiquidity", [params]);
 }
 
@@ -127,7 +140,7 @@ async function removeLiquidityETH(token, removePercent, recipient) {
   const currentLiquidity = await pairContract.balanceOf(secret.walletAddress);
   const liquidityToRemove =
     BigInt(currentLiquidity.toString()) *
-    (BigInt(removePercent) / BigInt(DENOMINATOR));
+    (BigInt(removePercent * 1_000) / BigInt(DENOMINATOR * 1_000));
   const params = {
     token,
     liquidity: liquidityToRemove,
@@ -228,6 +241,63 @@ async function getUserPool(walletAddress) {
   return pools;
 }
 
+async function getSwapParams(
+  tokenA,
+  tokenB,
+  removePercent,
+  tokenX,
+  tokenY,
+  sender
+) {
+  const removeParams = await removeLiquidity(
+    tokenA,
+    tokenB,
+    removePercent,
+    sender,
+    LP_AGGREGATOR_ADDRESS,
+    false
+  );
+
+  const addParams = {
+    tokenA: tokenX,
+    tokenB: tokenY,
+    amountADesired: 0,
+    amountBDesired: 0,
+    amountAMin: 0,
+    amountBMin: 0,
+    to: LP_AGGREGATOR_ADDRESS,
+    deadline: Math.floor(Date.now() / 1000) + 60 * 10,
+  };
+
+  const LP_Interface = new ethers.utils.Interface(LPAggreatorABI);
+  const calldata = LP_Interface.encodeFunctionData("swapLP", [
+    removeParams,
+    addParams,
+  ]);
+  return { to: LP_AGGREGATOR_ADDRESS, calldata };
+}
+
+async function getAllowance(token, owner, spender = LP_AGGREGATOR_ADDRESS) {
+  const provider = getProvider();
+  const tokenContract = new Contract(token, ERC20_ABI, provider);
+  const allowance = await tokenContract.callStatic.allowance(owner, spender);
+  return allowance.toString();
+}
+
+async function approve(
+  token,
+  spender = LP_AGGREGATOR_ADDRESS,
+  amount = ethers.constants.MaxUint256
+) {
+  const provider = getProvider();
+  const tokenContract = new Contract(token, ERC20_ABI, provider);
+  const calldata = await tokenContract.populateTransaction.approve(
+    spender,
+    amount
+  );
+  return calldata.data;
+}
+
 module.exports = {
   buyTokenWithETH,
   sellTokenForETH,
@@ -240,6 +310,9 @@ module.exports = {
   swapLPForLP,
   swapLPQuote,
   getUserPool,
+  getSwapParams,
+  getAllowance,
+  approve,
   FACTORY_ADDRESS,
   WETH_ADDRESS,
 };
