@@ -27,6 +27,8 @@ const {
   MAX_FEE_PER_GAS,
   MAX_PRIORITY_FEE_PER_GAS,
   fromReadableAmount,
+  DAI_ADDRESS,
+  USDC_ADDRESS,
 } = require("./helper");
 const {
   Token,
@@ -37,14 +39,14 @@ const {
 const { getOutputQuote } = require("./quoter");
 
 /*
- * Swap tokenIn for tokenOut with a given amountIn
+ * Get params for swapping tokenIn for tokenOut with a given amountIn
  * @param {string} tokenIn - address of the token to be swapped
  * @param {string} tokenOut - address of the token to be received
  * @param {number} fee - fee tier of the pool
  * @param {number} amountIn - amount of tokenIn to be swapped (expressed in decimal places) (blank if swapType is 1)
  * @param {number} amountOutMinimum - minimum amount of tokenOut to be received (blank if swapType is 1)
  * @param {number} amountOut - amount of tokenOut to be received (expressed in decimal places) (blank if swapType is 0)
- * @param {number} amoutInMaximum - maximum amount of tokenIn needed to complete the swap (blank if swapType is 0)
+ * @param {number} amountInMaximum - maximum amount of tokenIn needed to complete the swap (blank if swapType is 0)
  * @returns {string} - the amount of tokenOut received. Still expressed in decimal places
  */
 async function swap(
@@ -54,7 +56,7 @@ async function swap(
   amountIn,
   amountOutMinimum,
   amountOut,
-  amoutInMaximum,
+  amountInMaximum,
   swapType
 ) {
   const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
@@ -72,15 +74,6 @@ async function swap(
     tokenOut,
     await tokenOutContract.callStatic.decimals(),
     await tokenOutContract.callStatic.symbol()
-  );
-
-  const walletAddress = getWalletAddress();
-
-  console.log(
-    "Before balance: ",
-    await getBalanceReadable(tokenInContract, walletAddress),
-    " / ",
-    await getBalanceReadable(tokenOutContract, walletAddress)
   );
 
   const currentPoolAddress = computePoolAddress({
@@ -119,17 +112,10 @@ async function swap(
       outputAmount: CurrencyAmount.fromRawAmount(tokenB, amountOut),
       tradeType: TradeType.EXACT_INPUT,
     });
-    if (
-      (await tokenInContract.callStatic.allowance(
-        walletAddress,
-        SWAP_ROUTER_ADDRESS
-      )) < amountIn
-    ) {
-      await getTokenTransferApproval(tokenA, amountIn);
-    }
+    await getTokenTransferApproval(tokenA, amountIn);
   } else {
     const amountIn = await getOutputQuote(tokenOut, tokenIn, fee, amountOut);
-    if (BigInt(amountIn.toString()) > BigInt(amoutInMaximum.toString())) {
+    if (BigInt(amountIn.toString()) > BigInt(amountInMaximum.toString())) {
       throw new Error("Insufficient input amount");
     }
     uncheckedTrade = Trade.createUncheckedTrade({
@@ -138,20 +124,18 @@ async function swap(
       outputAmount: CurrencyAmount.fromRawAmount(tokenB, amountOut),
       tradeType: TradeType.EXACT_OUTPUT,
     });
-    if (
-      (await tokenInContract.callStatic.allowance(
-        walletAddress,
-        SWAP_ROUTER_ADDRESS
-      )) < amountIn
-    ) {
-      await getTokenTransferApproval(tokenA, amountIn);
-    }
+    await getTokenTransferApproval(
+      tokenA,
+      BigInt(
+        (BigInt(uncheckedTrade.inputAmount.quotient.toString()) * BigInt(101)) /
+          BigInt(100)
+      ).toString()
+    );
   }
 
   const options = {
     slippageTolerance: new Percent(100, 10_000), // 1%
     deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes
-    recipient: walletAddress,
   };
   const methodParameters = SwapRouter.swapCallParameters(
     [uncheckedTrade],
@@ -162,51 +146,54 @@ async function swap(
     data: methodParameters.calldata,
     to: SWAP_ROUTER_ADDRESS,
     value: methodParameters.value,
-    from: walletAddress,
     maxFeePerGas: MAX_FEE_PER_GAS,
     maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
   };
 
-  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-  const res = await wallet.sendTransaction(tx);
-  await res.wait();
-  console.log(
-    "After balance: ",
-    await getBalanceReadable(tokenInContract, walletAddress),
-    " / ",
-    await getBalanceReadable(tokenOutContract, walletAddress)
-  );
-  return;
+  return tx;
 }
 
-// async function main() {
-//   // const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-//   // console.log("Before balance: ");
-//   // const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
-//   // await wallet.sendTransaction({
-//   //   to: WETH_ADDRESS,
-//   //   value: ethers.utils.parseEther("10"),
-//   // });
-//   // await swap(
-//   //   WETH_ADDRESS,
-//   //   "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
-//   //   3000,
-//   //   ethers.utils.parseEther("0.1"),
-//   //   0,
-//   //   0,
-//   //   0,
-//   //   0
-//   // );
+async function main() {
+  // const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+  // console.log("Before balance: ");
+  // const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  // await wallet.sendTransaction({
+  //   to: WETH_ADDRESS,
+  //   value: ethers.utils.parseEther("10"),
+  // });
+  // await swap(
+  //   WETH_ADDRESS,
+  //   USDC_ADDRESS, // USDC
+  //   3000,
+  //   ethers.utils.parseEther("0.1"),
+  //   0,
+  //   0,
+  //   0,
+  //   0
+  // );
 
-//   await swap(
-//     WETH_ADDRESS,
-//     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
-//     3000,
-//     0,
-//     0,
-//     fromReadableAmount(1000, 6).toString(),
-//     ethers.utils.parseEther("1"),
-//     1
-//   );
-// }
+  await swap(
+    WETH_ADDRESS,
+    USDC_ADDRESS, // USDC
+    3000,
+    0,
+    0,
+    ethers.utils.parseUnits("10000", 6),
+    ethers.utils.parseEther("100"),
+    1
+  );
+
+  await swap(
+    WETH_ADDRESS,
+    DAI_ADDRESS,
+    3000,
+    0,
+    0,
+    ethers.utils.parseUnits("10000", 18),
+    ethers.utils.parseEther("100"),
+    1
+  );
+}
 // main();
+
+module.exports = { swap };
