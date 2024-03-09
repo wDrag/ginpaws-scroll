@@ -51,8 +51,10 @@ contract LPAggreator {
 
     mapping(address => IUniswapV2Router02) public routers02;
 
-    address private constant FACTORY = 0x36B83E0D41D1dd9C73a006F0c1cbC1F096E69E34;
-    address private constant UNISWAP_ROUTER02_ADDRESS = 0x873789aaF553FD0B4252d0D2b72C6331c47aff2E;
+    address private constant FACTORY =
+        0x36B83E0D41D1dd9C73a006F0c1cbC1F096E69E34;
+    address private constant UNISWAP_ROUTER02_ADDRESS =
+        0x873789aaF553FD0B4252d0D2b72C6331c47aff2E;
     address private constant CETH = 0x2ED3dddae5B2F321AF0806181FBFA6D049Be47d8;
 
     constructor() public {
@@ -61,7 +63,9 @@ contract LPAggreator {
         );
     }
 
-    function removeLiquidity(RemoveLPParams memory removeParams) internal returns (uint256 amountARemoved, uint256 amountBRemoved) {
+    function removeLiquidity(
+        RemoveLPParams memory removeParams
+    ) internal returns (uint256 amountARemoved, uint256 amountBRemoved) {
         // Transfer LP from user to this contract
         address pair = IUniswapV2Factory(FACTORY).getPair(
             removeParams.tokenA,
@@ -80,9 +84,8 @@ contract LPAggreator {
         );
 
         // Remove liquidity
-        (amountARemoved, amountBRemoved) = routers02[
-            UNISWAP_ROUTER02_ADDRESS
-        ].removeLiquidity(
+        (amountARemoved, amountBRemoved) = routers02[UNISWAP_ROUTER02_ADDRESS]
+            .removeLiquidity(
                 removeParams.tokenA,
                 removeParams.tokenB,
                 removeParams.liquidity,
@@ -93,7 +96,9 @@ contract LPAggreator {
             );
     }
 
-    function addLiquidity(AddLPParams memory addParams) internal returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
+    function addLiquidity(
+        AddLPParams memory addParams
+    ) internal returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         IERC20(addParams.tokenA).safeApprove(
             UNISWAP_ROUTER02_ADDRESS,
             addParams.amountADesired
@@ -102,121 +107,120 @@ contract LPAggreator {
             UNISWAP_ROUTER02_ADDRESS,
             addParams.amountBDesired
         );
-        (amountA, amountB, liquidity) = routers02[UNISWAP_ROUTER02_ADDRESS].addLiquidity(
-            addParams.tokenA,
-            addParams.tokenB,
-            addParams.amountADesired,
-            addParams.amountBDesired,
-            addParams.amountAMin,
-            addParams.amountBMin,
-            addParams.to,
-            block.timestamp
-        );
-
-        if(amountA < addParams.amountADesired) {
-            IERC20(addParams.tokenA).safeApprove(
-                UNISWAP_ROUTER02_ADDRESS,
-                0
+        (amountA, amountB, liquidity) = routers02[UNISWAP_ROUTER02_ADDRESS]
+            .addLiquidity(
+                addParams.tokenA,
+                addParams.tokenB,
+                addParams.amountADesired,
+                addParams.amountBDesired,
+                addParams.amountAMin,
+                addParams.amountBMin,
+                addParams.to,
+                block.timestamp
             );
+
+        if (amountA < addParams.amountADesired) {
+            IERC20(addParams.tokenA).safeApprove(UNISWAP_ROUTER02_ADDRESS, 0);
         }
 
-        if(amountB < addParams.amountBDesired) {
-            IERC20(addParams.tokenB).safeApprove(
-                UNISWAP_ROUTER02_ADDRESS,
-                0
-            );
+        if (amountB < addParams.amountBDesired) {
+            IERC20(addParams.tokenB).safeApprove(UNISWAP_ROUTER02_ADDRESS, 0);
         }
 
         // Transfer remain token to user
-        uint256 amountETH = swapFromTokenToETH(addParams.amountADesired - amountA, addParams.tokenA, addParams.amountBDesired - amountB, addParams.tokenB);
-        if(amountETH > 0) {
-            IERC20(CETH).safeTransfer(
-                msg.sender,
-                amountETH
-            );
+        uint256 amountETH = swapFromTokenToETH(
+            addParams.amountADesired - amountA,
+            addParams.tokenA,
+            addParams.amountBDesired - amountB,
+            addParams.tokenB
+        );
+        if (amountETH > 0) {
+            IERC20(CETH).safeTransfer(msg.sender, amountETH);
         }
     }
 
-    function swapFromTokenToETH(uint256 amountA, address tokenA, uint256 amountB, address tokenB) internal returns (uint256 amountETH) {
+    function swapFromTokenToETH(
+        uint256 amountA,
+        address tokenA,
+        uint256 amountB,
+        address tokenB
+    ) internal returns (uint256 amountETH) {
         // Swap from removed token to ETH
         if (tokenA == CETH) {
             amountETH = amountA;
-        } else if(amountA > 0) {
-            IERC20(tokenA).safeApprove(
-                UNISWAP_ROUTER02_ADDRESS,
-                amountA
-            );
+        } else if (amountA > 0) {
+            IERC20(tokenA).safeApprove(UNISWAP_ROUTER02_ADDRESS, amountA);
             address[] memory path = new address[](2);
             path[0] = tokenA;
             path[1] = CETH;
-            (uint[] memory amounts) = routers02[UNISWAP_ROUTER02_ADDRESS].swapExactTokensForTokens(
-                amountA,
-                0, 
-                path,
-                address(this),
-                block.timestamp
-            );
+            uint[] memory amounts = routers02[UNISWAP_ROUTER02_ADDRESS]
+                .swapExactTokensForTokens(
+                    amountA,
+                    0,
+                    path,
+                    address(this),
+                    block.timestamp
+                );
             amountETH += amounts[1];
         }
 
-        if(tokenB == CETH) {
+        if (tokenB == CETH) {
             amountETH += amountB;
-        } else if(amountB > 0) {
-            IERC20(tokenB).safeApprove(
-                UNISWAP_ROUTER02_ADDRESS,
-                amountB
-            );
+        } else if (amountB > 0) {
+            IERC20(tokenB).safeApprove(UNISWAP_ROUTER02_ADDRESS, amountB);
             address[] memory path = new address[](2);
             path[0] = tokenB;
             path[1] = CETH;
-            (uint[] memory amounts) = routers02[UNISWAP_ROUTER02_ADDRESS].swapExactTokensForTokens(
-                amountB,
-                0, 
-                path,
-                address(this),
-                block.timestamp
-            );
+            uint[] memory amounts = routers02[UNISWAP_ROUTER02_ADDRESS]
+                .swapExactTokensForTokens(
+                    amountB,
+                    0,
+                    path,
+                    address(this),
+                    block.timestamp
+                );
             amountETH += amounts[1];
         }
     }
 
-    function swapFromETHToToken(uint256 amountETHToA, address tokenA, uint256 amountETHToB, address tokenB) internal returns (uint256 amountA, uint256 amountB) {
-        if(tokenA != CETH) {
-            IERC20(CETH).safeApprove(
-                UNISWAP_ROUTER02_ADDRESS,
-                amountETHToA
-            );
+    function swapFromETHToToken(
+        uint256 amountETHToA,
+        address tokenA,
+        uint256 amountETHToB,
+        address tokenB
+    ) internal returns (uint256 amountA, uint256 amountB) {
+        if (tokenA != CETH) {
+            IERC20(CETH).safeApprove(UNISWAP_ROUTER02_ADDRESS, amountETHToA);
             address[] memory path = new address[](2);
             path[0] = CETH;
             path[1] = tokenA;
-            (uint[] memory amounts) = routers02[UNISWAP_ROUTER02_ADDRESS].swapExactTokensForTokens(
-                amountETHToA,
-                0, 
-                path,
-                address(this),
-                block.timestamp
-            );
+            uint[] memory amounts = routers02[UNISWAP_ROUTER02_ADDRESS]
+                .swapExactTokensForTokens(
+                    amountETHToA,
+                    0,
+                    path,
+                    address(this),
+                    block.timestamp
+                );
 
             amountA = amounts[1];
         } else {
             amountA = amountETHToA;
         }
 
-        if(tokenB != CETH) {
-            IERC20(amountETHToB).safeApprove(
-                UNISWAP_ROUTER02_ADDRESS,
-                amountETHToB
-            );
+        if (tokenB != CETH) {
+            IERC20(CETH).safeApprove(UNISWAP_ROUTER02_ADDRESS, amountETHToB);
             address[] memory path = new address[](2);
             path[0] = CETH;
             path[1] = tokenB;
-            (uint[] memory amounts) = routers02[UNISWAP_ROUTER02_ADDRESS].swapExactTokensForTokens(
-                amountETHToB,
-                0, 
-                path,
-                address(this),
-                block.timestamp
-            );
+            uint[] memory amounts = routers02[UNISWAP_ROUTER02_ADDRESS]
+                .swapExactTokensForTokens(
+                    amountETHToB,
+                    0,
+                    path,
+                    address(this),
+                    block.timestamp
+                );
 
             amountB = amounts[1];
         } else {
@@ -224,11 +228,11 @@ contract LPAggreator {
         }
     }
 
-    function transferLiquidityToOwner(address pair, uint256 liquidity) internal {
-        IERC20(pair).safeTransfer(
-            msg.sender,
-            liquidity
-        );
+    function transferLiquidityToOwner(
+        address pair,
+        uint256 liquidity
+    ) internal {
+        IERC20(pair).safeTransfer(msg.sender, liquidity);
     }
 
     function swapLP(
@@ -236,12 +240,23 @@ contract LPAggreator {
         AddLPParams memory addParams
     ) public returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         // Remove liquidity
-        (uint256 amountARemoved, uint256 amountBRemoved) = removeLiquidity(removeParams);
+        (uint256 amountARemoved, uint256 amountBRemoved) = removeLiquidity(
+            removeParams
+        );
         // Swap from removed token to ETH
-        uint256 amountETH = swapFromTokenToETH(amountARemoved, removeParams.tokenA, amountBRemoved, removeParams.tokenB);
-        // Swap from ETH to add token
-        (uint256 amountAToAdd, uint256 amountBToAdd) = swapFromETHToToken(amountETH / 2, addParams.tokenA, amountETH / 2, addParams.tokenB);
-
+        uint256 amountETH = swapFromTokenToETH(
+            amountARemoved,
+            removeParams.tokenA,
+            amountBRemoved,
+            removeParams.tokenB
+        );
+        // Swap from ETH to add token;
+        (uint256 amountAToAdd, uint256 amountBToAdd) = swapFromETHToToken(
+            amountETH / 2,
+            addParams.tokenA,
+            amountETH / 2,
+            addParams.tokenB
+        );
         // Add liquidity
         (amountA, amountB, liquidity) = addLiquidity(
             AddLPParams(
