@@ -17,6 +17,10 @@ contract TestLPAggreator is Test {
     address public constant CETH = 0x2ED3dddae5B2F321AF0806181FBFA6D049Be47d8;
     address public constant USDT = 0x7d682e65EFC5C13Bf4E394B8f376C48e6baE0355;
     address public constant USDC = 0x349298B0E20DF67dEFd6eFb8F3170cF4a32722EF;
+    address public constant FAUCET_ETH =
+        0xcD71270F82f319E0498FF98AF8269C3f0D547c65;
+    address public constant FAUCET_BTC =
+        0x54593e02c39aEFf52B166bd036797D2b1478de8D;
 
     address private constant UNISWAP_ROUTER02_ADDRESS =
         0x873789aaF553FD0B4252d0D2b72C6331c47aff2E;
@@ -113,7 +117,7 @@ contract TestLPAggreator is Test {
                 liquidity,
                 0,
                 0,
-                address(lpAggreator),
+                address(this),
                 block.timestamp
             );
         LPAggreator.AddLPParams memory addParams = LPAggreator.AddLPParams(
@@ -148,5 +152,25 @@ contract TestLPAggreator is Test {
         IERC20(USDC).safeApprove(address(lpAggreator), 1e6 * 1e18);
         (uint256 amountA, uint256 amountB, uint256 liquidityMinted) = lpAggreator.addLPFromToken(USDC, 1e6 * 1e18, addParams);
         console.log('Add liquidity success, amountA: %s, amountB: %s, liquidity: %s', amountA, amountB, liquidityMinted);
+    }
+
+    function testRemoveLPToToken() public {
+        console.log("--------------------");
+        IERC20 pair = IERC20(IUniswapV2Factory(FACTORY).getPair(CETH, USDT));
+        console.log("pair balance: %s", pair.balanceOf(address(this)));
+
+        LPAggreator.RemoveLPParams memory removeParams = LPAggreator
+            .RemoveLPParams(
+                USDT,
+                CETH,
+                liquidity,
+                0,
+                0,
+                address(this),
+                block.timestamp
+            );
+        IERC20(pair).safeApprove(address(lpAggreator), liquidity);
+        (uint256 amountOut) = lpAggreator.removeLPToToken(removeParams, FAUCET_ETH, 0);
+        console.log('Remove liquidity success, amountOut: %s', amountOut);
     }
 }
