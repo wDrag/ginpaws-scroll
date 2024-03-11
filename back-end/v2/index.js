@@ -318,18 +318,16 @@ function getTokenToLPParams(
   return { to: LP_AGGREGATOR_ADDRESS, calldata };
 }
 
-async function approve(
-  token,
+function approve(
   spender = LP_AGGREGATOR_ADDRESS,
   amount = ethers.constants.MaxUint256
 ) {
-  const provider = getProvider();
-  const tokenContract = new Contract(token, ERC20_ABI, provider);
-  const calldata = await tokenContract.populateTransaction.approve(
+  const tokenInterface = new ethers.utils.Interface(ERC20_ABI);
+  const calldata = tokenInterface.encodeFunctionData("approve", [
     spender,
-    amount
-  );
-  return calldata.data;
+    amount,
+  ]);
+  return calldata;
 }
 
 async function removeLPToToken(

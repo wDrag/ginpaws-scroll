@@ -139,11 +139,10 @@ app.get("/api/v2/getAllowance", async (req, res) => {
   res.status(200).json({ allowance });
 });
 
-app.get("/api/v2/approve", async (req, res) => {
-  const { token } = req.query;
+app.get("/api/v2/approve", (req, res) => {
   const { approve } = require("./v2/index");
-  const calldata = await approve(token);
-  res.status(200).json({ calldata });
+  const data = approve();
+  res.status(200).json({ data });
 });
 
 app.get("/api/v2/getSwapParams", async (req, res) => {
