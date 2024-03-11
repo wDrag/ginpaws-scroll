@@ -207,6 +207,30 @@ contract LPAggreator {
         }
     }
 
+    function swapFromETHToToken(
+        uint256 amountETHToA,
+        address tokenA
+    ) internal returns (uint256 amountA) {
+        if (tokenA != CETH) {
+            IERC20(CETH).safeApprove(UNISWAP_ROUTER02_ADDRESS, amountETHToA);
+            address[] memory path = new address[](2);
+            path[0] = CETH;
+            path[1] = tokenA;
+            uint[] memory amounts = routers02[UNISWAP_ROUTER02_ADDRESS]
+                .swapExactTokensForTokens(
+                    amountETHToA,
+                    0,
+                    path,
+                    address(this),
+                    block.timestamp
+                );
+
+            amountA = amounts[1];
+        } else {
+            amountA = amountETHToA;
+        }
+    }
+
     function swapFromETHToTokens(
         uint256 amountETHToA,
         address tokenA,
@@ -337,5 +361,27 @@ contract LPAggreator {
             addParams.tokenB
         );
         transferLiquidityToOwner(pair, liquidity);
+    }
+
+    function removeLPToToken(RemoveLPParams memory removeParams, address tokenOut, uint256 amountOutMin) public returns (uint256 amountOut) {
+        (uint256 amountA, uint256 amountB) = removeLiquidity(removeParams);
+
+        // swap from token to ETH
+        uint256 amountETH = swapFromTokensToETH(
+            amountA,
+            removeParams.tokenA,
+            amountB,
+            removeParams.tokenB
+        );
+
+        // swap from ETH to token
+        amountOut = swapFromETHToToken(
+            amountETH,
+            tokenOut
+        );
+
+        require(amountOut >= amountOutMin, "LPAggreator: INSUFFICIENT_OUTPUT_AMOUNT");
+
+        IERC20(tokenOut).safeTransfer(msg.sender, amountOut);
     }
 }
