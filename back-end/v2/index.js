@@ -10,7 +10,7 @@ const { getProvider } = require("../scripts/helper");
 const ROUTER_ADDRESS = "0x873789aaf553fd0b4252d0d2b72c6331c47aff2e";
 const FACTORY_ADDRESS = "0x36b83e0d41d1dd9c73a006f0c1cbc1f096e69e34";
 const WETH_ADDRESS = "0x2ed3dddae5b2f321af0806181fbfa6d049be47d8";
-const LP_AGGREGATOR_ADDRESS = "0xa4a1d5534fa61d4394d39cceba2b070ad37dae52";
+const LP_AGGREGATOR_ADDRESS = "0xff433f6cdfddcd8df4d0fe89a362f47cd5d2d1e5";
 const ROUTER_V2_ABI = require("./ABI/router_v2_abi.json");
 const FACTORY_V2_ABI = require("./ABI/factory_v2_abi.json");
 const { DENOMINATOR } = require("../scripts/LP_Helper");
@@ -114,8 +114,8 @@ async function removeLiquidity(
   const pairContract = new Contract(pairAddress, ERC20_ABI, provider);
   const currentLiquidity = await pairContract.callStatic.balanceOf(sender);
   const liquidityToRemove =
-    (BigInt(currentLiquidity.toString()) * BigInt(removePercent)) /
-    BigInt(DENOMINATOR);
+    (BigInt(currentLiquidity.toString()) * BigInt(removePercent * 1_000)) /
+    BigInt(DENOMINATOR * 1_000);
 
   const params = {
     tokenA,
@@ -332,6 +332,34 @@ async function approve(
   return calldata.data;
 }
 
+async function removeLPToToken(
+  tokenA,
+  tokenB,
+  removePercent,
+  sender,
+  tokenOut,
+  isEncoded = true
+) {
+  const removeParams = await removeLiquidity(
+    tokenA,
+    tokenB,
+    removePercent,
+    sender,
+    LP_AGGREGATOR_ADDRESS,
+    false
+  );
+  if (!isEncoded) {
+    return { to: LP_AGGREGATOR_ADDRESS, removeParams, tokenOut };
+  }
+  const LP_Interface = new ethers.utils.Interface(LPAggreatorABI);
+  const calldata = LP_Interface.encodeFunctionData("removeLPToToken", [
+    removeParams,
+    tokenOut,
+    0,
+  ]);
+  return { to: LP_AGGREGATOR_ADDRESS, calldata };
+}
+
 module.exports = {
   buyTokenWithETH,
   sellTokenForETH,
@@ -348,6 +376,7 @@ module.exports = {
   getAllowance,
   getTokenToLPParams,
   approve,
+  removeLPToToken,
   FACTORY_ADDRESS,
   WETH_ADDRESS,
 };

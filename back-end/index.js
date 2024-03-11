@@ -167,6 +167,19 @@ app.get("/api/v2/getTokenToLPParams", (req, res) => {
   res.status(200).json({ params });
 });
 
+app.get("/api/v2/removeLPToToken", async (req, res) => {
+  const { tokenA, tokenB, removePercent, sender, tokenOut } = req.query;
+  const { removeLPToToken } = require("./v2/index");
+  const params = await removeLPToToken(
+    tokenA,
+    tokenB,
+    removePercent,
+    sender,
+    tokenOut
+  );
+  res.status(200).json({ params });
+});
+
 app.listen(9000, () => {
   console.log("Server running on port 9000");
 });
