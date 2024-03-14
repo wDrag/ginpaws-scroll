@@ -31,7 +31,6 @@ const Swap = () => {
 
   const {
     pair_Percent,
-    debouncedPair_Percent,
     tokenE_Amount,
     onAmountChange,
     getToken,
@@ -78,12 +77,38 @@ const Swap = () => {
         </div>
         <div className="SwapBoxContainer">
           <div className="SwapBoxTitle">
-            <span>LP Swap</span>
+            {swapType === "a/b-x/y" && <span>LP Swap</span>}
+            {swapType === "e-x/y" && <span>Simple Add Liquid</span>}
+            {swapType === "x/y-e" && <span>Simple Remove Liquid</span>}
           </div>
           <div className="SwapBoxInputContainer">
             {swapType === "e-x/y" && (
               <div className="SwapBoxInput">
-                <div className="SwapBoxInput"></div>
+                <div className="SwapBoxInputTitle">
+                  <span>Add Amount</span>
+                </div>
+                <div className="SwapBoxInputLabelContainer">
+                  <div
+                    onClick={() => {
+                      openModal("tokenE");
+                    }}
+                    className="SwapBoxInputLabel"
+                  >
+                    {getToken("tokenE").img && (
+                      <img src={getToken("tokenE").img} alt="icon" />
+                    )}
+                    {getToken("tokenE").symbol}
+                    <span>&#9660;</span>
+                  </div>
+                </div>
+                <Input
+                  value={tokenE_Amount}
+                  onChange={(e) => {
+                    onAmountChange(e.target.value);
+                  }}
+                  className="SwapBoxInputField"
+                  placeholder="0.0"
+                />
               </div>
             )}
             {swapType === "a/b-x/y" && (
@@ -232,7 +257,7 @@ const Swap = () => {
               <span className="seperatorArr">&#129123;</span>
             </div>
             <div className="SwapBoxOutput">
-              <span className="SwapBoxOutputTitle">Estimated Pool</span>
+              <span className="SwapBoxOutputTitle">Estimated Amount</span>
               <div className="SwapBoxOutputContainer">
                 <span>{estimatedTokenXAmount || "-"}</span>
                 <div
