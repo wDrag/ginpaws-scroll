@@ -1,5 +1,5 @@
 import "./Header.scss";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Dropdown } from "antd";
 import confluxIcon from "/Conflux.png";
 import EthereumIcon from "/Ethereum.png";
@@ -76,12 +76,14 @@ const Header = () => {
   ];
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="header">
       <div className="header__left">
         <img src={GinpawsIcon} alt="logo" />
         <span
+          className={location.pathname !== "/pool" ? "selected" : ""}
           onClick={() => {
             navigate("/swap");
           }}
@@ -89,6 +91,7 @@ const Header = () => {
           LP Swap
         </span>
         <span
+          className={location.pathname === "/pool" ? "selected" : ""}
           onClick={() => {
             navigate("/pool");
           }}

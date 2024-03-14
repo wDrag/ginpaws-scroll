@@ -296,7 +296,7 @@ function getTokenToLPParams(
   tokenA,
   tokenB,
   sender,
-  isEncoded = true
+  isEncoded
 ) {
   const addParams = {
     tokenA,
@@ -308,8 +308,8 @@ function getTokenToLPParams(
     to: sender,
     deadline: Math.floor(Date.now() / 1000) + 60 * 10,
   };
-  if (!isEncoded) {
-    return { to: LP_AGGREGATOR_ADDRESS, params };
+  if (isEncoded === "false") {
+    return { to: LP_AGGREGATOR_ADDRESS, addParams };
   }
   const LP_Interface = new ethers.utils.Interface(LPAggreatorABI);
   const data = LP_Interface.encodeFunctionData("addLPFromToken", [
@@ -375,7 +375,7 @@ async function removeLPToToken(
   removePercent,
   sender,
   tokenOut,
-  isEncoded = true
+  isEncoded
 ) {
   const removeParams = await removeLiquidity(
     tokenA,
@@ -385,7 +385,7 @@ async function removeLPToToken(
     LP_AGGREGATOR_ADDRESS,
     false
   );
-  if (!isEncoded) {
+  if (isEncoded === "false") {
     return { to: LP_AGGREGATOR_ADDRESS, removeParams, tokenOut };
   }
   const LP_Interface = new ethers.utils.Interface(LPAggreatorABI);

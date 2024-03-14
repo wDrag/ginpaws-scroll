@@ -8,6 +8,11 @@ const useTokens = (activeChainID) => {
   const [pair_Percent, setPair_Percent] = useState(0);
   const [debouncedPair_Percent, setDebouncedPair_Percent] = useState(0);
   const [tokenE_Amount, setTokenE_Amount] = useState(undefined);
+  const [debouncedTokenE_Amount, setDebouncedTokenE_Amount] =
+    useState(undefined);
+  const [estimateTokenEFunction, setEstimateTokenEFunction] = useState(
+    () => () => {}
+  );
   const [tokenX_Amount, setTokenX_Amount] = useState(undefined);
   const [tokenY_Amount, setTokenY_Amount] = useState(undefined);
 
@@ -28,10 +33,11 @@ const useTokens = (activeChainID) => {
     setTokenY_Amount(undefined);
   }, [activeChainID]);
 
-  const changeAmount = (value, token) => {
+  const changeAmount = (value, token, estimateFunction) => {
     switch (token) {
       case "tokenE":
         setTokenE_Amount(value);
+        setEstimateTokenEFunction(() => estimateFunction);
         break;
       case "tokenX":
         setTokenX_Amount(value);
@@ -62,13 +68,28 @@ const useTokens = (activeChainID) => {
     }
   };
 
-  const onAmountChange = (e, token) => {
+  const onAmountChange = (e, token, estimateFunction) => {
     const value = e.target.value;
     const reg = /^-?\d*(\.\d*)?$/;
-    if (value.match(reg) || value === "") {
-      changeAmount(value, token);
+    if (value.match(reg)) {
+      changeAmount(value, token, estimateFunction);
     }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTokenE_Amount(tokenE_Amount);
+      console.log(tokenE_Amount);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [tokenE_Amount, 1000]);
+
+  useEffect(() => {
+    console.log("estimateTokenEFunction: ", estimateTokenEFunction);
+    if (estimateTokenEFunction) {
+      estimateTokenEFunction();
+    }
+  }, [debouncedTokenE_Amount]);
 
   const onPairPercentChange = async (newValue, estimate) => {
     setPair_Percent(newValue);
@@ -78,9 +99,9 @@ const useTokens = (activeChainID) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedPair_Percent(pair_Percent);
-    }, 500);
+    }, 1000);
     return () => clearTimeout(timer);
-  }, [pair_Percent, 500]);
+  }, [pair_Percent, 1000]);
 
   useEffect(() => {
     console.log("estimateFunction: ", estimateFunction);

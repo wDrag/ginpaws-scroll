@@ -162,21 +162,30 @@ app.get("/api/v2/getSwapParams", async (req, res) => {
 });
 
 app.get("/api/v2/getTokenToLPParams", (req, res) => {
-  const { tokenIn, amountIn, tokenA, tokenB, sender } = req.query;
+  const { tokenIn, amountIn, tokenA, tokenB, sender, isEncoded } = req.query;
   const { getTokenToLPParams } = require("./v2/index");
-  const params = getTokenToLPParams(tokenIn, amountIn, tokenA, tokenB, sender);
+  const params = getTokenToLPParams(
+    tokenIn,
+    amountIn,
+    tokenA,
+    tokenB,
+    sender,
+    isEncoded
+  );
   res.status(200).json({ params });
 });
 
 app.get("/api/v2/removeLPToToken", async (req, res) => {
-  const { tokenA, tokenB, removePercent, sender, tokenOut } = req.query;
+  const { tokenA, tokenB, removePercent, sender, tokenOut, isEncoded } =
+    req.query;
   const { removeLPToToken } = require("./v2/index");
   const params = await removeLPToToken(
     tokenA,
     tokenB,
     removePercent,
     sender,
-    tokenOut
+    tokenOut,
+    isEncoded
   );
   res.status(200).json({ params });
 });
