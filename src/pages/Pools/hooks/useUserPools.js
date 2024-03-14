@@ -18,6 +18,7 @@ const useUserPools = () => {
               },
             }
           );
+          console.log(response);
           setUserPoolsList(response.data.pools);
         } catch (error) {
           console.error("Error getting user pools list: ", error);

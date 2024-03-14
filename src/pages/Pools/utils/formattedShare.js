@@ -6,7 +6,12 @@ const formattedShare = (unformattedShare) => {
     return "<0.01";
   }
   console.log("unformattedShare", unformattedShare);
-  return unformattedShare.toFixed(2);
+  try {
+    return unformattedShare.toFixed(2);
+  } catch (e) {
+    console.log("error", e);
+    return unformattedShare;
+  }
 };
 
 export default formattedShare;

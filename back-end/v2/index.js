@@ -214,11 +214,15 @@ async function getUserPool(walletAddress) {
     const C = parseFloat((A / B).toString()) / 10_000_000_000;
 
     const A0 =
-      (BigInt(10_000_000_000 * C) * BigInt(token0Balances[i].toString())) /
+      (BigInt((10_000_000_000 * C).toFixed(0)) *
+        BigInt(token0Balances[i].toString())) /
       BigInt(1_000_000_000_000);
     const A1 =
-      (BigInt(10_000_000_000 * C) * BigInt(token1Balances[i].toString())) /
+      (BigInt((10_000_000_000 * C).toFixed(0)) *
+        BigInt(token1Balances[i].toString())) /
       BigInt(1_000_000_000_000);
+    console.log(A, B, C);
+    console.log(i, A0, A1);
 
     pools.push({
       token0: pairList[i].token0,
