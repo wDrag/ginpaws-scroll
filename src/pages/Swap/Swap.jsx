@@ -44,6 +44,7 @@ const Swap = () => {
     onPairPercentChange,
     getTokenList,
     loadToken,
+    tokenE_Balance,
   } = useTokens(activeChain.chainID);
 
   const { isOpen, closeModal, openModal, changeToken } = useModal();
@@ -123,6 +124,10 @@ const Swap = () => {
                       onAmountChange(e, "tokenE", estimateTokenEFunction);
                     }}
                   />
+                </div>
+                <div className="Balance">
+                  <span>Balance:</span>
+                  <span>{tokenE_Balance || 0.0}</span>
                 </div>
               </div>
             )}

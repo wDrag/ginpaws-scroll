@@ -170,6 +170,27 @@
                         }
                     }
 
+                    .Balance {
+                        font-size: 16px;
+                        font-weight: 500;
+                        color: #fff;
+                        display: flex;
+                        flex-direction: row;
+                        align-content: space-between;
+                        justify-content: space-between;
+                        width: 100%;
+
+                        span {
+                            font-size: 16 px;
+                            font-weight: 500;
+                            color: #fff;
+                            padding: 10px 0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }
+                    }
+
                     .SwapBoxInputFieldContainer {
                         display: flex;
                         flex-direction: row;

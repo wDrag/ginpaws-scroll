@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import CFXTokenList from "../../../json/CFXTokenList.json";
 import ETHTokenList from "../../../json/ETHTokenList.json";
 import CFXTestnetTokenList from "../../../json/CFXTestnetTokenList.json";
 import GoerliTokenList from "../../../json/GoerliTokenList.json";
+import { SignerContext } from "../../../Contexts/SignerContext";
+import ERC20ABI from "../../../abi/ERC20ABI.json";
+import { useAccount } from "wagmi";
+import { ethers } from "ethers";
 
 const useTokens = (activeChainID) => {
   const [pair_Percent, setPair_Percent] = useState(0);
@@ -21,7 +25,13 @@ const useTokens = (activeChainID) => {
   const [tokenE_ListID, setTokenE_ListID] = useState(undefined);
   const [tokenX_ListID, setTokenX_ListID] = useState(undefined);
   const [tokenY_ListID, setTokenY_ListID] = useState(undefined);
+  const [tokenE_Balance, setTokenE_Balance] = useState(undefined);
   const [estimateFunction, setEstimateFunction] = useState(() => () => {});
+
+  const LP_AGGREGATOR_ADDRESS = import.meta.env.VITE_LP_AGGREGATOR_ADDRESS;
+
+  const { signer } = useContext(SignerContext);
+  const { address } = useAccount();
 
   useEffect(() => {
     setTokenE_ListID(undefined);
@@ -32,6 +42,22 @@ const useTokens = (activeChainID) => {
     setTokenX_Amount(undefined);
     setTokenY_Amount(undefined);
   }, [activeChainID]);
+
+  useEffect(() => {
+    const fetchTokenBalance = async () => {
+      const tokenE = getToken("tokenE");
+      if (tokenE.address) {
+        const balanceOfContract = new ethers.Contract(
+          tokenE.address,
+          ERC20ABI,
+          signer
+        );
+        const balance = await balanceOfContract.balanceOf(address);
+        setTokenE_Balance((balance / 10 ** 18).toString().slice(0, 8));
+      }
+    };
+    fetchTokenBalance();
+  }, [tokenE_ListID]);
 
   const changeAmount = (value, token, estimateFunction) => {
     switch (token) {
@@ -178,6 +204,7 @@ const useTokens = (activeChainID) => {
     onPairPercentChange,
     getTokenList,
     loadToken,
+    tokenE_Balance,
   };
 };
 
