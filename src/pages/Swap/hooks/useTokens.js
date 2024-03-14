@@ -6,6 +6,7 @@ import GoerliTokenList from "../../../json/GoerliTokenList.json";
 
 const useTokens = (activeChainID) => {
   const [pair_Percent, setPair_Percent] = useState(0);
+  const [debouncedPair_Percent, setDebouncedPair_Percent] = useState(0);
   const [tokenE_Amount, setTokenE_Amount] = useState(undefined);
   const [tokenX_Amount, setTokenX_Amount] = useState(undefined);
   const [tokenY_Amount, setTokenY_Amount] = useState(undefined);
@@ -15,6 +16,7 @@ const useTokens = (activeChainID) => {
   const [tokenE_ListID, setTokenE_ListID] = useState(undefined);
   const [tokenX_ListID, setTokenX_ListID] = useState(undefined);
   const [tokenY_ListID, setTokenY_ListID] = useState(undefined);
+  const [estimateFunction, setEstimateFunction] = useState(() => () => {});
 
   useEffect(() => {
     setTokenE_ListID(undefined);
@@ -68,9 +70,24 @@ const useTokens = (activeChainID) => {
     }
   };
 
-  const onPairPercentChange = (newValue) => {
+  const onPairPercentChange = async (newValue, estimate) => {
     setPair_Percent(newValue);
+    setEstimateFunction(() => estimate);
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedPair_Percent(pair_Percent);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [pair_Percent, 500]);
+
+  useEffect(() => {
+    console.log("estimateFunction: ", estimateFunction);
+    if (estimateFunction) {
+      estimateFunction();
+    }
+  }, [debouncedPair_Percent]);
 
   const handleChangeToken = (id, token) => {
     switch (token) {
@@ -130,6 +147,7 @@ const useTokens = (activeChainID) => {
 
   return {
     pair_Percent,
+    debouncedPair_Percent,
     tokenE_Amount,
     tokenX_Amount,
     tokenY_Amount,

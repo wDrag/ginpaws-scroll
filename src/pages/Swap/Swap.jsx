@@ -26,16 +26,12 @@ const Swap = () => {
 
   const { handleApprove } = useHandleTx();
 
-  const {
-    estimatedTokenXAmount,
-    estimatedTokenYAmount,
-    estimatedGas,
-    estimateGas,
-    estimateTokenAmount,
-  } = useEstimate();
+  const { estimatedTokenXAmount, estimatedTokenYAmount, estimateTokenAmount } =
+    useEstimate();
 
   const {
     pair_Percent,
+    debouncedPair_Percent,
     tokenE_Amount,
     onAmountChange,
     getToken,
@@ -71,12 +67,25 @@ const Swap = () => {
           >
             e-x/y
           </span>
+          <span
+            className={`SwapType ${
+              swapType === "x/y-e" ? "SwapTypeActive" : ""
+            }`}
+            onClick={() => setSwapType("x/y-e")}
+          >
+            x/y-e
+          </span>
         </div>
         <div className="SwapBoxContainer">
           <div className="SwapBoxTitle">
             <span>LP Swap</span>
           </div>
           <div className="SwapBoxInputContainer">
+            {swapType === "e-x/y" && (
+              <div className="SwapBoxInput">
+                <div className="SwapBoxInput"></div>
+              </div>
+            )}
             {swapType === "a/b-x/y" && (
               <div className="SwapBoxInput">
                 <div className="SwapBoxInputTitle">
@@ -116,107 +125,100 @@ const Swap = () => {
                   </div>
                   <Slider
                     value={pair_Percent}
-                    onChange={(e, newValue) => {
-                      onPairPercentChange(newValue);
-                      estimateTokenAmount(
+                    onChange={async (e, newValue) => {
+                      const estimateFunction = estimateTokenAmount.bind(
+                        this,
+
+                        getToken("tokenA").address,
+                        getToken("tokenB").address,
                         tokenA_Amount,
                         tokenB_Amount,
                         getToken("tokenX").address,
                         getToken("tokenY").address,
-                        pair_Percent
+                        newValue,
+                        pairAddress
                       );
-                      estimateGas(
-                        getToken("tokenA").address,
-                        getToken("tokenB").address,
-                        getToken("tokenX").address,
-                        getToken("tokenY").address,
-                        swapType
-                      );
+                      onPairPercentChange(newValue, estimateFunction);
                     }}
                     className="SwapBoxInputSlider"
                     defaultValue={0}
+                    step={1}
+                    min={0}
+                    max={100}
                   />
                   <div className="SwapBoxInputSliderValueMarks">
                     <span
-                      onClick={() => {
-                        onPairPercentChange(25);
-                        estimateTokenAmount(
+                      onClick={async () => {
+                        const estimateFunction = estimateTokenAmount.bind(
+                          this,
+
+                          getToken("tokenA").address,
+                          getToken("tokenB").address,
                           tokenA_Amount,
                           tokenB_Amount,
                           getToken("tokenX").address,
                           getToken("tokenY").address,
-                          pair_Percent
+                          25,
+                          pairAddress
                         );
-                        estimateGas(
-                          getToken("tokenA").address,
-                          getToken("tokenB").address,
-                          getToken("tokenX").address,
-                          getToken("tokenY").address,
-                          swapType
-                        );
+                        onPairPercentChange(25, estimateFunction);
                       }}
                     >
                       25%
                     </span>
                     <span
-                      onClick={() => {
-                        onPairPercentChange(50);
-                        estimateTokenAmount(
+                      onClick={async () => {
+                        const estimateFunction = estimateTokenAmount.bind(
+                          this,
+
+                          getToken("tokenA").address,
+                          getToken("tokenB").address,
                           tokenA_Amount,
                           tokenB_Amount,
                           getToken("tokenX").address,
                           getToken("tokenY").address,
-                          pair_Percent
+                          50,
+                          pairAddress
                         );
-                        estimateGas(
-                          getToken("tokenA").address,
-                          getToken("tokenB").address,
-                          getToken("tokenX").address,
-                          getToken("tokenY").address,
-                          swapType
-                        );
+                        onPairPercentChange(50, estimateFunction);
                       }}
                     >
                       50%
                     </span>
                     <span
-                      onClick={() => {
-                        onPairPercentChange(75);
-                        estimateTokenAmount(
+                      onClick={async () => {
+                        const estimateFunction = estimateTokenAmount.bind(
+                          this,
+
+                          getToken("tokenA").address,
+                          getToken("tokenB").address,
                           tokenA_Amount,
                           tokenB_Amount,
                           getToken("tokenX").address,
                           getToken("tokenY").address,
-                          pair_Percent
+                          75,
+                          pairAddress
                         );
-                        estimateGas(
-                          getToken("tokenA").address,
-                          getToken("tokenB").address,
-                          getToken("tokenX").address,
-                          getToken("tokenY").address,
-                          swapType
-                        );
+                        onPairPercentChange(75, estimateFunction);
                       }}
                     >
                       75%
                     </span>
                     <span
-                      onClick={() => {
-                        onPairPercentChange(100);
-                        estimateTokenAmount(
+                      onClick={async () => {
+                        const estimateFunction = estimateTokenAmount.bind(
+                          this,
+
+                          getToken("tokenA").address,
+                          getToken("tokenB").address,
                           tokenA_Amount,
                           tokenB_Amount,
                           getToken("tokenX").address,
                           getToken("tokenY").address,
-                          pair_Percent
+                          100,
+                          pairAddress
                         );
-                        estimateGas(
-                          getToken("tokenA").address,
-                          getToken("tokenB").address,
-                          getToken("tokenX").address,
-                          getToken("tokenY").address,
-                          swapType
-                        );
+                        onPairPercentChange(100, estimateFunction);
                       }}
                     >
                       Max
@@ -261,10 +263,6 @@ const Swap = () => {
                   <span>&#9660;</span>
                 </div>
               </div>
-              <div className="EstimatedGas">
-                <span>Estimated Gas</span>
-                <span>{estimatedGas || "-"}</span>
-              </div>
             </div>
           </div>
 
@@ -303,8 +301,18 @@ const Swap = () => {
             return (
               <div
                 key={index}
-                onClick={() => {
+                onClick={async () => {
                   handleChangeToken(index, changeToken);
+                  await estimateTokenAmount(
+                    getToken("tokenA").address,
+                    getToken("tokenB").address,
+                    tokenA_Amount,
+                    tokenB_Amount,
+                    getToken("tokenX").address,
+                    getToken("tokenY").address,
+                    pair_Percent,
+                    pairAddress
+                  );
                   closeModal();
                 }}
                 className="SwapModalItem"

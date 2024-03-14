@@ -248,7 +248,7 @@ async function getSwapParams(
   tokenX,
   tokenY,
   sender,
-  isEncoded = true
+  isEncoded
 ) {
   const removeParams = await removeLiquidity(
     tokenA,
@@ -270,7 +270,9 @@ async function getSwapParams(
     deadline: Math.floor(Date.now() / 1000) + 60 * 10,
   };
 
-  if (!isEncoded) {
+  if (isEncoded === "false") {
+    console.log("getSwapParamsaaaaaa", { removeParams, addParams });
+
     return { to: LP_AGGREGATOR_ADDRESS, removeParams, addParams };
   }
   const LP_Interface = new ethers.utils.Interface(LPAggreatorABI);

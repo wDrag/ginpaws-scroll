@@ -146,7 +146,8 @@ app.get("/api/v2/approve", (req, res) => {
 });
 
 app.get("/api/v2/getSwapParams", async (req, res) => {
-  const { tokenA, tokenB, removePercent, tokenX, tokenY, sender } = req.query;
+  const { tokenA, tokenB, removePercent, tokenX, tokenY, sender, isEncoded } =
+    req.query;
   const { getSwapParams } = require("./v2/index");
   const params = await getSwapParams(
     tokenA,
@@ -154,7 +155,8 @@ app.get("/api/v2/getSwapParams", async (req, res) => {
     removePercent,
     tokenX,
     tokenY,
-    sender
+    sender,
+    isEncoded
   );
   res.status(200).json({ params });
 });

@@ -7,12 +7,11 @@ import {
   useSwitchChain,
 } from "wagmi";
 import { ChainContext } from "./ChainContext";
+import { ethers } from "ethers";
 
 export const SignerContext = createContext();
 
 export const SignerContextProvider = ({ children }) => {
-  const [provider, setProvider] = useState(undefined);
-  const [signer, setSigner] = useState(undefined);
   const [signerAddress, setSignerAddress] = useState(undefined);
   const [isConnected, setIsConnected] = useState(false);
   const { connectors, connectAsync } = useConnect();
@@ -20,6 +19,9 @@ export const SignerContextProvider = ({ children }) => {
   const { address } = useAccount();
   const { activeChain } = useContext(ChainContext);
   const { switchChainAsync } = useSwitchChain();
+
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
 
   const handleConnectButton = async () => {
     if (!address) {
@@ -34,14 +36,12 @@ export const SignerContextProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    // Add your code here
-  }, []);
-
   return (
     <SignerContext.Provider
       value={{
         handleConnectButton,
+        signer,
+        provider,
       }}
     >
       {children}

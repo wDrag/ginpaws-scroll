@@ -1,52 +1,18 @@
-import { useAccount, useSendTransaction } from "wagmi";
+import { useAccount, useSendTransaction, useWriteContract } from "wagmi";
 import axios from "axios";
-import { parseEther, parseGwei } from "viem";
+import { maxUint256 } from "viem";
+import ERC20ABI from "../../../abi/ERC20ABI.json";
+import { abi as LPAggregatorABI } from "../../../abi/LPAggregator.json";
+import { ethers } from "ethers";
+import { useContext } from "react";
+import { SignerContext } from "../../../Contexts/SignerContext";
 
 const useHandleTx = () => {
   const { sendTransactionAsync, onSuccess } = useSendTransaction();
   const { address } = useAccount();
-  const getSwapParams = async (
-    tokenA,
-    tokenB,
-    removePercent,
-    tokenX,
-    tokenY
-  ) => {
-    try {
-      const params = await axios.get(
-        import.meta.env.VITE_API_ENDPOINT + "/getSwapParams",
-        {
-          params: {
-            tokenA: tokenA,
-            tokenB: tokenB,
-            removePercent: removePercent * 100,
-            tokenX: tokenX,
-            tokenY: tokenY,
-            sender: address,
-          },
-        }
-      );
-      return params.data.params;
-    } catch (error) {
-      console.error("Error while getting swap params:", error);
-    }
-  };
-
-  const handleSendTransaction = async (tx) => {
-    try {
-      console.log(tx, "tx");
-      const result = await sendTransactionAsync({
-        to: tx.to,
-        data: tx.calldata,
-        value: parseEther("0"),
-        gas: parseGwei("0.005"),
-      });
-      console.log(result, "send tx result");
-      return result;
-    } catch (error) {
-      console.error("Error while sending transaction:", error);
-    }
-  };
+  const LP_AGGREGATOR_ADDRESS = import.meta.env.VITE_LP_AGGREGATOR_ADDRESS;
+  const { writeContractAsync } = useWriteContract();
+  const { signer } = useContext(SignerContext);
 
   const handleApprove = async (
     tokenA,
@@ -69,34 +35,56 @@ const useHandleTx = () => {
       return;
     }
     try {
-      const tx = await getSwapParams(
-        tokenA,
-        tokenB,
-        removePercent,
-        tokenX,
-        tokenY
+      console.log("Approving tokens");
+      const allowanceRespond = await axios.get(
+        import.meta.env.VITE_API_ENDPOINT + "/getAllowance",
+        {
+          params: {
+            token: pairAddress,
+            owner: address,
+          },
+        }
       );
-      console.log(tx, "approve tx");
+      const isAllowed = allowanceRespond.data.allowance !== "0";
 
-      const tokenA_ApproveData = await axios.get(
-        import.meta.env.VITE_API_ENDPOINT + "/approve"
+      if (!isAllowed) {
+        const pairContract = new ethers.Contract(pairAddress, ERC20ABI, signer);
+        const tx = await pairContract.approve(
+          LP_AGGREGATOR_ADDRESS,
+          maxUint256
+        );
+        console.log("tx:", await tx.wait());
+      }
+      const txParams = await axios.get(
+        import.meta.env.VITE_API_ENDPOINT + "/getSwapParams",
+        {
+          params: {
+            tokenA,
+            tokenB,
+            removePercent: removePercent * 100,
+            tokenX,
+            tokenY,
+            sender: address,
+            isEncoded: false,
+          },
+        }
       );
-
-      console.log("tokenA_ApproveData:", tokenA_ApproveData, "approve data A");
-
-      await handleSendTransaction({
-        to: pairAddress,
-        data: tokenA_ApproveData.data.calldata,
-      });
-
-      const result = await handleSendTransaction(tx);
-      console.log(result, "approve result");
-      return result;
+      console.log("txParams:", txParams.data);
+      const swapContract = new ethers.Contract(
+        LP_AGGREGATOR_ADDRESS,
+        LPAggregatorABI,
+        signer
+      );
+      const swapTx = await swapContract.swapLP(
+        txParams.data.params.removeParams,
+        txParams.data.params.addParams
+      );
+      console.log("swapTx:", await swapTx.wait());
     } catch (error) {
       console.error("Error while approving:", error);
     }
   };
-  return { getSwapParams, handleSendTransaction, handleApprove };
+  return { handleApprove };
 };
 
 export default useHandleTx;
