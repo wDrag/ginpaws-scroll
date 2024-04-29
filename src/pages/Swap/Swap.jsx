@@ -1,5 +1,5 @@
 import "./Swap.scss";
-import { Modal, Input } from "antd";
+import { Modal } from "antd";
 import { Slider } from "@mui/material";
 import useSwapType from "./hooks/useSwapType";
 import useTokens from "./hooks/useTokens";
@@ -37,8 +37,6 @@ const Swap = () => {
 
   const {
     pair_Percent,
-    tokenE_Amount,
-    onAmountChange,
     getToken,
     handleChangeToken,
     onPairPercentChange,
@@ -58,17 +56,15 @@ const Swap = () => {
       <div className="SwapContainer">
         <div className="SwapTypeContainer">
           <span
-            className={`SwapType ${
-              swapType === "a/b-x/y" ? "SwapTypeActive" : ""
-            }`}
+            className={`SwapType ${swapType === "a/b-x/y" ? "SwapTypeActive" : ""
+              }`}
             onClick={() => setSwapType("a/b-x/y")}
           >
             a/b-x/y
           </span>
           <span
-            className={`SwapType ${
-              swapType === "e-x/y" ? "SwapTypeActive" : ""
-            }`}
+            className={`SwapType ${swapType === "e-x/y" ? "SwapTypeActive" : ""
+              }`}
             onClick={() => setSwapType("e-x/y")}
           >
             e-x/y
@@ -138,12 +134,11 @@ const Swap = () => {
                 </div>
                 <div className="SwapBoxInputLabelContainer">
                   <div
-                    className={`SwapBoxInputLabel ${
-                      getToken("tokenA").img
-                        ? ""
-                        : "SwapBoxInputLabelNotSelected"
-                    }`}
-                    onClick={() => {}}
+                    className={`SwapBoxInputLabel ${getToken("tokenA").img
+                      ? ""
+                      : "SwapBoxInputLabelNotSelected"
+                      }`}
+                    onClick={() => { }}
                   >
                     {getToken("tokenA").img && (
                       <img src={getToken("tokenA").img} alt="icon" />
@@ -151,12 +146,11 @@ const Swap = () => {
                     {getToken("tokenA").symbol}
                   </div>
                   <div
-                    className={`SwapBoxInputLabel ${
-                      getToken("tokenB").img
-                        ? ""
-                        : "SwapBoxInputLabelNotSelected"
-                    }`}
-                    onClick={() => {}}
+                    className={`SwapBoxInputLabel ${getToken("tokenB").img
+                      ? ""
+                      : "SwapBoxInputLabelNotSelected"
+                      }`}
+                    onClick={() => { }}
                   >
                     {getToken("tokenB").img && (
                       <img src={getToken("tokenB").img} alt="icon" />
