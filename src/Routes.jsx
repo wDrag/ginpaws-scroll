@@ -1,29 +1,24 @@
 import { createBrowserRouter } from "react-router-dom";
 import Home from "./pages/Home/Home";
 import Swap from "./pages/Swap/Swap";
-import Header from "./components/Header/Header";
-import Footer from "./components/Footer/Footer";
+// import Header from "./components/Header/Header";
+// import Footer from "./components/Footer/Footer";
 import Pools from "./pages/Pools/Pools";
 import Add from "./pages/Add/Add";
+import { HeaderLayout } from "./layout/HeaderLayout";
 
-const FullLayout = ({ children }) => {
-  return (
-    <div>
-      <Header />
-      {children}
-      <Footer />
-    </div>
-  );
-};
+// const FullLayout = ({ children }) => {
+//   return (
+//     <div>
+//       <Header />
+//       {children}
+//       <Footer />
+//     </div>
+//   );
+// };
 
-const HeaderLayout = ({ children }) => {
-  return (
-    <div>
-      <Header />
-      {children}
-    </div>
-  );
-};
+
+
 
 const router = createBrowserRouter([
   {
