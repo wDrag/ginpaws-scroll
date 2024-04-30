@@ -10,7 +10,6 @@ export const ChainContextProvider = ({ children }) => {
   const [activeChain, setActiveChain] = useState(ChainList[3]);
   const { switchChainAsync } = useSwitchChain();
   const handleChangeChain = async (id) => {
-    console.log("Switching chain to:", id);
     try {
       await switchChainAsync({ chainId: id });
 

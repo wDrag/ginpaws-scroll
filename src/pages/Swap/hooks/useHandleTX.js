@@ -45,7 +45,6 @@ const useHandleTx = () => {
       );
       const isAllowed = allowanceRespond.data.allowance !== "0";
 
-      console.log("isAllowed:", isAllowed);
 
       if (!isAllowed) {
         const pairContract = new ethers.Contract(pairAddress, ERC20ABI, signer);
@@ -53,7 +52,6 @@ const useHandleTx = () => {
           LP_AGGREGATOR_ADDRESS,
           maxUint256
         );
-        console.log("tx:", await tx.wait());
       }
 
       const txParams = await axios.get(
@@ -69,7 +67,6 @@ const useHandleTx = () => {
           },
         }
       );
-      console.log("txParams:", txParams.data);
 
       const removeLiquidContract = new ethers.Contract(
         LP_AGGREGATOR_ADDRESS,
@@ -83,7 +80,6 @@ const useHandleTx = () => {
         parseUnits("0", 18),
         { gasPrice: parseGwei("30"), gasLimit: 2_000_000 }
       );
-      console.log("removeTx:", await removeTx.wait());
       alert("Transaction successful");
     } catch (error) {
       console.error("Error while approving:", error);
@@ -111,7 +107,6 @@ const useHandleTx = () => {
       );
       const isAllowed = allowanceRespond.data.allowance !== "0";
 
-      console.log("isAllowed:", isAllowed);
 
       if (!isAllowed) {
         const tokenContract = new ethers.Contract(tokenE, ERC20ABI, signer);
@@ -119,7 +114,6 @@ const useHandleTx = () => {
           LP_AGGREGATOR_ADDRESS,
           maxUint256
         );
-        console.log("tx:", await tx.wait());
       }
       const txParams = await axios.get(
         import.meta.env.VITE_API_ENDPOINT + "/getTokenToLPParams",
@@ -134,21 +128,17 @@ const useHandleTx = () => {
           },
         }
       );
-      console.log("txParams:", txParams.data);
       const addLiquidContract = new ethers.Contract(
         LP_AGGREGATOR_ADDRESS,
         LPAggregatorABI,
         signer
       );
-      console.log("txParams:", txParams.data.params.addParams);
-      console.log(tokenE, parseUnits(tokenE_Amount, 18));
       const addTx = await addLiquidContract.addLPFromToken(
         tokenE,
         parseUnits(tokenE_Amount, 18),
         txParams.data.params.addParams,
         { gasPrice: parseGwei("30"), gasLimit: 2_000_000 }
       );
-      console.log("addTx:", await addTx.wait());
       alert("Transaction successful");
     } catch (error) {
       console.error("Error while approving:", error);
@@ -176,7 +166,6 @@ const useHandleTx = () => {
       return;
     }
     try {
-      console.log("Approving tokens");
       const allowanceRespond = await axios.get(
         import.meta.env.VITE_API_ENDPOINT + "/getAllowance",
         {
@@ -194,7 +183,6 @@ const useHandleTx = () => {
           LP_AGGREGATOR_ADDRESS,
           maxUint256
         );
-        console.log("tx:", await tx.wait());
       }
       const txParams = await axios.get(
         import.meta.env.VITE_API_ENDPOINT + "/getSwapParams",
@@ -210,7 +198,6 @@ const useHandleTx = () => {
           },
         }
       );
-      console.log("txParams:", txParams.data);
       const swapContract = new ethers.Contract(
         LP_AGGREGATOR_ADDRESS,
         LPAggregatorABI,
@@ -220,7 +207,6 @@ const useHandleTx = () => {
         txParams.data.params.removeParams,
         txParams.data.params.addParams
       );
-      console.log("swapTx:", await swapTx.wait());
       alert("Transaction successful");
     } catch (error) {
       console.error("Error while approving:", error);

@@ -103,13 +103,11 @@ const useTokens = (activeChainID) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedTokenE_Amount(tokenE_Amount);
-      console.log(tokenE_Amount);
     }, 1000);
     return () => clearTimeout(timer);
   }, [tokenE_Amount, 1000]);
 
   useEffect(() => {
-    console.log("estimateTokenEFunction: ", estimateTokenEFunction);
     if (estimateTokenEFunction) {
       estimateTokenEFunction();
     }
@@ -128,7 +126,6 @@ const useTokens = (activeChainID) => {
   }, [pair_Percent, 1000]);
 
   useEffect(() => {
-    console.log("estimateFunction: ", estimateFunction);
     if (estimateFunction) {
       estimateFunction();
     }

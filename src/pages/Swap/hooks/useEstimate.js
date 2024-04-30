@@ -8,7 +8,6 @@ import { ethers } from "ethers";
 import axios from "axios";
 
 const useEstimate = () => {
-  const [estimatedGas, setEstimatedGas] = useState(undefined);
   const [estimatedTokenEAmount, setEstimatedTokenEAmount] = useState(undefined);
   const [estimatedTokenXAmount, setEstimatedTokenXAmount] = useState(undefined);
   const [estimatedTokenYAmount, setEstimatedTokenYAmount] = useState(undefined);
@@ -45,12 +44,10 @@ const useEstimate = () => {
     );
     const isAllowed = allowanceRespond.data.allowance !== "0";
 
-    console.log("isAllowed:", isAllowed);
 
     if (!isAllowed) {
       const pairContract = new ethers.Contract(pairAddress, ERC20ABI, signer);
       const tx = await pairContract.approve(LP_AGGREGATOR_ADDRESS, maxUint256);
-      console.log("tx:", await tx.wait());
     }
 
     const txParams = await axios.get(
@@ -66,7 +63,6 @@ const useEstimate = () => {
         },
       }
     );
-    console.log("txParams:", txParams.data);
 
     const removeLiquidContract = new ethers.Contract(
       LP_AGGREGATOR_ADDRESS,
@@ -80,7 +76,6 @@ const useEstimate = () => {
       parseUnits("0", 18),
       { gasPrice: parseGwei("30"), gasLimit: 2_000_000 }
     );
-    console.log("removeTx:", removeTx);
     setEstimatedTokenEAmount(
       ethers.utils.formatUnits(removeTx.toString(), 18).slice(0, 10)
     );
@@ -109,7 +104,6 @@ const useEstimate = () => {
       );
       const isAllowed = allowanceRespond.data.allowance !== "0";
 
-      console.log("isAllowed:", isAllowed);
 
       if (!isAllowed) {
         const tokenContract = new ethers.Contract(tokenE, ERC20ABI, signer);
@@ -117,7 +111,6 @@ const useEstimate = () => {
           LP_AGGREGATOR_ADDRESS,
           maxUint256
         );
-        console.log("tx:", await tx.wait());
       }
       const txParams = await axios.get(
         import.meta.env.VITE_API_ENDPOINT + "/getTokenToLPParams",
@@ -132,21 +125,17 @@ const useEstimate = () => {
           },
         }
       );
-      console.log("txParams:", txParams.data);
       const addLiquidContract = new ethers.Contract(
         LP_AGGREGATOR_ADDRESS,
         LPAggregatorABI,
         signer
       );
-      console.log("txParams:", txParams.data.params.addParams);
-      console.log(tokenE, parseUnits(tokenE_Amount, 18));
       const addTx = await addLiquidContract.callStatic.addLPFromToken(
         tokenE,
         parseUnits(tokenE_Amount, 18),
         txParams.data.params.addParams,
         { gasPrice: parseGwei("30"), gasLimit: 2_000_000 }
       );
-      console.log("addTx:", addTx);
       setEstimatedTokenXAmount(
         ethers.utils.formatUnits(addTx.amountA.toString(), 18).slice(0, 10)
       );
@@ -166,7 +155,6 @@ const useEstimate = () => {
     removePercent,
     pairAddress
   ) => {
-    console.log(removePercent);
     if (removePercent === 0) return;
     if (!tokenX || !tokenY) {
       setEstimatedTokenXAmount(undefined);
@@ -189,7 +177,6 @@ const useEstimate = () => {
       );
       const isAllowed = allowanceRespond.data.allowance !== "0";
 
-      console.log("isAllowed:", isAllowed);
 
       if (!isAllowed) {
         const pairContract = new ethers.Contract(pairAddress, ERC20ABI, signer);
@@ -197,7 +184,6 @@ const useEstimate = () => {
           LP_AGGREGATOR_ADDRESS,
           maxUint256
         );
-        console.log("tx:", await tx.wait());
       }
       const txParams = await axios.get(
         import.meta.env.VITE_API_ENDPOINT + "/getSwapParams",
@@ -219,15 +205,11 @@ const useEstimate = () => {
         signer
       );
 
-      console.log("txParams:", txParams.data.params.removeParams);
-      console.log("txParams:", txParams.data.params.addParams);
       const swapTx = await swapContract.callStatic.swapLP(
         txParams.data.params.removeParams,
         txParams.data.params.addParams,
         { gasPrice: parseGwei("30"), gasLimit: 2_000_000 }
       );
-      console.log("swapTx:", swapTx);
-      console.log(swapTx.amountB.toString());
 
       setEstimatedTokenXAmount(
         ethers.utils.formatUnits(swapTx.amountA.toString(), 18).slice(0, 10)

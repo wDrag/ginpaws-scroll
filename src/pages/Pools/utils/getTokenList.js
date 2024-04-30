@@ -12,7 +12,6 @@ const getTokenList = (activeChainID) => {
     case 534352:
       return ScrollTokenList;
     case 534351:
-      console.log(ScrollTestnetTokenList);
       return ScrollTestnetTokenList;
   }
 };
