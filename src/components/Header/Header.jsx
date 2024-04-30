@@ -1,7 +1,7 @@
 import "./Header.scss";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Dropdown } from "antd";
-import confluxIcon from "/Conflux.png";
+import ScrollIcon from "/Scroll.png";
 import EthereumIcon from "/Ethereum.png";
 import GinpawsIcon from "/logo1024.png";
 import { useContext } from "react";
@@ -22,11 +22,11 @@ const Header = () => {
         <div
           className="header__dropdownItem"
           onClick={() => {
-            handleChangeChain(71);
+            handleChangeChain(534351);
           }}
         >
-          <img src={confluxIcon} alt="Conflux eSpace (Testnet)" />
-          Conflux eSpace (Testnet)
+          <img src={ScrollIcon} alt="Scroll Sepolia" />
+          Scroll Sepolia
         </div>
       ),
       key: 0,
@@ -50,11 +50,11 @@ const Header = () => {
         <div
           className="header__dropdownItem"
           onClick={() => {
-            handleChangeChain(1030);
+            handleChangeChain(534352);
           }}
         >
-          <img src={confluxIcon} alt="Conflux eSpace" />
-          Conflux eSpace
+          <img src={ScrollIcon} alt="Scroll" />
+          Scroll
         </div>
       ),
       key: 3,

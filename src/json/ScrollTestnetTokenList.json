@@ -1,0 +1,51 @@
+[
+    {
+        "symbol": "WETH",
+        "img": "https://usethebitcoin.com/wp-content/uploads/2021/11/wETH-.png",
+        "name": "Wrapped Ethereum",
+        "address": "0x5300000000000000000000000000000000000004",
+        "decimals": 18
+    },
+    {
+        "symbol": "DAI",
+        "img": "https://s2.coinmarketcap.com/static/img/coins/200x200/4943.png",
+        "name": "DAI",
+        "address": "0xFa94dA175bE505B915187EdC8aE2f62F4Ccbf848",
+        "decimals": 18
+    },
+    {
+        "symbol": "USDT",
+        "img": "https://scan-icons.oss-cn-hongkong.aliyuncs.com/mainnet/0xfe97e85d13abd9c1c33384e796f10b73905637ce.png",
+        "name": "Tether USD",
+        "address": "0x87027E19837264Cd35B73B90AC10B9cE4B06B4F2",
+        "decimals": 6
+    },
+    {
+        "symbol": "USDC",
+        "img": "https://scan-icons.oss-cn-hongkong.aliyuncs.com/mainnet/0x6963efed0ab40f6c3d7bda44a05dcf1437c44372.png",
+        "name": "USD Coin",
+        "address": "0x8215a295313Fc22c3ebb08db3eB5FeF1D366AcCE",
+        "decimals": 18
+    },
+    {
+        "symbol": "WBTC",
+        "img": "https://scan-icons.oss-cn-hongkong.aliyuncs.com/mainnet/0x1f545487c62e5acfea45dcadd9c627361d1616d8.png",
+        "name": "Wrapped Bitcoin",
+        "address": "0x5EA79f3190ff37418d42F9B2618688494dBD9693",
+        "decimals": 8
+    },
+    {
+        "symbol": "tSPACE",
+        "img": "https://pbs.twimg.com/profile_images/1045291175245049856/Ls0RUfqR_400x400.png",
+        "name": "tSPACE Token",
+        "address": "0xeFBB3810C4347f416d2A24EE37b09b466b6Eac15",
+        "decimals": 18
+    },
+    {
+        "symbol": "GHO",
+        "img": "https://assets.coingecko.com/coins/images/30663/large/ghoaave.jpeg?1696529533",        "name": "GHO Token",
+        "address": "0xD9692f1748aFEe00FACE2da35242417dd05a8615",
+        "decimals": 18
+    }
+    
+]

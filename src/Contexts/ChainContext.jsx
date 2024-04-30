@@ -1,10 +1,11 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useState } from "react";
 import ChainList from "../../src/json/ChainList.json";
 
 import { useSwitchChain } from "wagmi";
 
 export const ChainContext = createContext();
 
+// eslint-disable-next-line react/prop-types
 export const ChainContextProvider = ({ children }) => {
   const [activeChain, setActiveChain] = useState(ChainList[3]);
   const { switchChainAsync } = useSwitchChain();
@@ -17,13 +18,13 @@ export const ChainContextProvider = ({ children }) => {
         case 1:
           setActiveChain(ChainList[0]);
           break;
-        case 1030:
+        case 534352:
           setActiveChain(ChainList[1]);
           break;
         case 5:
           setActiveChain(ChainList[2]);
           break;
-        case 71:
+        case 534351:
           setActiveChain(ChainList[3]);
           break;
         default:
