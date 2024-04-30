@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
-import CFXTokenList from "../../../json/CFXTokenList.json";
+import ScrollTokenList from "../../../json/ScrollTokenList.json";
 import ETHTokenList from "../../../json/ETHTokenList.json";
-import CFXTestnetTokenList from "../../../json/CFXTestnetTokenList.json";
+import ScrollTestnetTokenList from "../../../json/ScrollTestnetTokenList.json";
 import GoerliTokenList from "../../../json/GoerliTokenList.json";
 import { SignerContext } from "../../../Contexts/SignerContext";
 import ERC20ABI from "../../../abi/ERC20ABI.json";
@@ -27,8 +27,6 @@ const useTokens = (activeChainID) => {
   const [tokenY_ListID, setTokenY_ListID] = useState(undefined);
   const [tokenE_Balance, setTokenE_Balance] = useState(undefined);
   const [estimateFunction, setEstimateFunction] = useState(() => () => {});
-
-  const LP_AGGREGATOR_ADDRESS = import.meta.env.VITE_LP_AGGREGATOR_ADDRESS;
 
   const { signer } = useContext(SignerContext);
   const { address } = useAccount();
@@ -164,10 +162,10 @@ const useTokens = (activeChainID) => {
         return ETHTokenList;
       case 5:
         return GoerliTokenList;
-      case 1030:
-        return CFXTokenList;
-      case 71:
-        return CFXTestnetTokenList;
+      case 534352:
+        return ScrollTokenList;
+      case 534351:
+        return ScrollTestnetTokenList;
     }
   };
 

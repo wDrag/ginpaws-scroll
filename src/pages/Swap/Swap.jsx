@@ -9,6 +9,7 @@ import useModal from "./hooks/useModal";
 import { useParams } from "react-router-dom";
 import useHandleTx from "./hooks/useHandleTX";
 import useEstimate from "./hooks/useEstimate";
+import { Input } from "antd";
 
 const Swap = () => {
   const { swapType, setSwapType } = useSwapType();
@@ -42,7 +43,9 @@ const Swap = () => {
     onPairPercentChange,
     getTokenList,
     loadToken,
+    onAmountChange,
     tokenE_Balance,
+    tokenE_Amount,
   } = useTokens(activeChain.chainID);
 
   const { isOpen, closeModal, openModal, changeToken } = useModal();
@@ -70,9 +73,8 @@ const Swap = () => {
             e-x/y
           </span>
           <span
-            className={`SwapType ${
-              swapType === "a/b-e" ? "SwapTypeActive" : ""
-            }`}
+            className={`SwapType ${swapType === "a/b-e" ? "SwapTypeActive" : ""
+              }`}
             onClick={() => setSwapType("a/b-e")}
           >
             a/b-e
@@ -274,12 +276,11 @@ const Swap = () => {
                 </div>
                 <div className="SwapBoxInputLabelContainer">
                   <div
-                    className={`SwapBoxInputLabel ${
-                      getToken("tokenA").img
-                        ? ""
-                        : "SwapBoxInputLabelNotSelected"
-                    }`}
-                    onClick={() => {}}
+                    className={`SwapBoxInputLabel ${getToken("tokenA").img
+                      ? ""
+                      : "SwapBoxInputLabelNotSelected"
+                      }`}
+                    onClick={() => { }}
                   >
                     {getToken("tokenA").img && (
                       <img src={getToken("tokenA").img} alt="icon" />
@@ -287,12 +288,11 @@ const Swap = () => {
                     {getToken("tokenA").symbol}
                   </div>
                   <div
-                    className={`SwapBoxInputLabel ${
-                      getToken("tokenB").img
-                        ? ""
-                        : "SwapBoxInputLabelNotSelected"
-                    }`}
-                    onClick={() => {}}
+                    className={`SwapBoxInputLabel ${getToken("tokenB").img
+                      ? ""
+                      : "SwapBoxInputLabelNotSelected"
+                      }`}
+                    onClick={() => { }}
                   >
                     {getToken("tokenB").img && (
                       <img src={getToken("tokenB").img} alt="icon" />
@@ -441,7 +441,7 @@ const Swap = () => {
                 </div>
                 <div className="SwapBoxOutputContainer">
                   <span>{estimatedTokenYAmount || "-"}</span>
-                  <div onClick={() => {}} className="SwapBoxOutputLabel">
+                  <div onClick={() => { }} className="SwapBoxOutputLabel">
                     {getToken("tokenB").img && (
                       <img src={getToken("tokenB").img} alt="icon" />
                     )}

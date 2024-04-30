@@ -5,9 +5,9 @@
         "iconURL": "/Ethereum.png"
     },
     {
-        "chainID": 1030,
-        "chainName": "Conflux eSpace",
-        "iconURL": "/Conflux.png"
+        "chainID": 534352,
+        "chainName": "Scroll",
+        "iconURL": "/Scroll.png"
     },
     {
         "chainID": 5,
@@ -15,8 +15,8 @@
         "iconURL": "/Ethereum.png"
     },
     {
-        "chainID": 71,
-        "chainName": "Conflux eSpace (Testnet)",
-        "iconURL": "/Conflux.png"
+        "chainID": 534351,
+        "chainName": "Scroll Sepolia",
+        "iconURL": "/Scroll.png"
     }
 ]
