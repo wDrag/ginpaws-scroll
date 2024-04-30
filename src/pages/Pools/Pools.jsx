@@ -38,6 +38,7 @@ const Pools = () => {
             </span>
           )}
           {userPoolsList.map((pool, index) => {
+            console.log("pool", pool);
             return (
               <div
                 key={index}
